@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>岩心孔洞裂缝分析系统</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Microsoft YaHei",sans-serif; display: flex; flex-direction: column; height: 100vh; }
+.toolbar { background: #2c3e50; padding: 10px 20px; display: flex; gap: 12px; align-items: center; }
+.toolbar button { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; background: #3498db; color: #fff; font-size: 14px; }
+.toolbar button.active { background: #e74c3c; }
+.main { display: flex; flex: 1; overflow: hidden; }
+.viewer { flex: 1; padding: 12px; display: flex; flex-direction: column; align-items: center; overflow: auto; background: #1a1a1a; }
+.viewer img { max-width: 100%; max-height: 70vh; object-fit: contain; }
+.view-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+.view-tabs button { padding: 4px 12px; border: 1px solid #555; background: #333; color: #aaa; cursor: pointer; border-radius: 4px 4px 0 0; font-size: 12px; }
+.view-tabs button.current { background: #444; color: #fff; border-bottom: 2px solid #3498db; }
+.panel { width: 300px; padding: 16px; overflow-y: auto; background: #f8f9fa; border-left: 1px solid #ddd; }
+.panel label { display: block; margin: 8px 0 4px; font-size: 13px; color: #555; }
+.panel input, .panel select { width: 100%; padding: 6px; font-size: 13px; margin-bottom: 8px; }
+.panel button { width: 100%; padding: 10px; background: #2c3e50; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; margin: 8px 0; }
+.summary { background: #fff; padding: 12px; border-radius: 6px; margin: 8px 0; font-size: 12px; }
+.summary td { padding: 2px 8px; }
+.chart-area { padding: 12px; background: #fff; border-top: 1px solid #ddd; max-height: 200px; }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button id="btnOpen">📁 打开图像</button>
+  <input type="file" id="fileInput" accept="image/*" style="display:none">
+  <button id="btnHole" class="active">🕳️ 孔洞分析</button>
+  <button id="btnFracture">⚡ 裂缝分析</button>
+  <button id="btnGrain">📏 粒度分析</button>
+  <span style="flex:1"></span>
+  <button id="btnKnowledge">📚 知识库</button>
+  <button id="btnReport">📊 报告</button>
+</div>
+<div class="main">
+  <div class="viewer">
+    <div class="view-tabs">
+      <button class="current" data-view="result">结果图</button>
+      <button data-view="original">原图</button>
+      <button data-view="gray">灰度图</button>
+      <button data-view="binary">二值图</button>
+    </div>
+    <img id="mainImage" src="" alt="请打开图像">
+  </div>
+  <div class="panel">
+    <div id="holeParams">
+      <label>阈值</label><input type="range" id="threshold" min="50" max="200" value="100">
+      <span id="thresholdVal">100</span>
+      <label>最小面积(px)</label><input type="number" id="minArea" value="10">
+      <label>最大面积(px)</label><input type="number" id="maxArea" value="10000">
+      <label>标尺(mm/px)</label><input type="number" id="scale" value="0.05" step="0.01">
+    </div>
+    <button id="btnAnalyze">🔍 开始分析</button>
+    <div class="summary" id="summary"><i>等待分析...</i></div>
+    <button id="btnExportJSON">📥 导出JSON</button>
+    <button id="btnExportCSV">📊 导出CSV</button>
+  </div>
+</div>
+<div class="chart-area"><canvas id="chart"></canvas></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
