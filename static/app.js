@@ -40,36 +40,37 @@ document.querySelectorAll('.view-tabs button').forEach(b => {
   };
 });
 
-document.getElementById('btnAnalyze').onclick = async function() {
-  if (!currentImage) return alert('请先打开图像');
-  if (roiMode) return alert('请双击闭合多边形后再分析');
+async function runAnalysis() {
+  if (!currentImage) { alert('请先打开图像'); return; }
+  if (roiMode) { alert('请双击闭合多边形后再分析'); return; }
   const params = {};
   if (currentType === 'hole') params.threshold = +document.getElementById('threshold').value;
   params.min_area = +document.getElementById('minArea').value;
   params.max_area = +document.getElementById('maxArea').value;
   params.scale_mm_per_px = +document.getElementById('scale').value;
-  if (roiPolygon) params.roi_polygon = roiPolygon;
+  if (roiPolygon && roiPolygon.length >= 3) params.roi_polygon = roiPolygon;
 
-  const res = await fetch('/api/analyze', {method:'POST',headers:{'Content-Type':'application/json'}, body:JSON.stringify({image:currentImage,type:currentType,params})});
-  const data = await res.json();
-  resultData = data;
-  imageData = data.images;
-  if (data.error) { alert(data.error); return; }
-
-  mainImg.src = data.images.result || data.images.gray || currentImage;
-  let s = '';
-  for (const [k,v] of Object.entries(data.summary)) {
-    if (k === 'diameters' || k === 'size_distribution') continue;
-    s += '<tr><td><b>'+k+'</b></td><td>'+(typeof v==='number'?v.toFixed(2):v)+'</td></tr>';
-  }
-  document.getElementById('summary').innerHTML = '<table>'+s+'</table>';
-
-  if (data.summary.diameters && data.summary.diameters.length > 0) {
-    const ctx = document.getElementById('chart').getContext('2d');
-    if (chart) chart.destroy();
-    chart = new Chart(ctx, {type:'bar', data:{labels:data.summary.diameters.map((_,i)=>'#'+(i+1)), datasets:[{label:'直径(mm)',data:data.summary.diameters}]}, options:{responsive:true,maintainAspectRatio:false}});
-  }
-};
+  try {
+    const res = await fetch('/api/analyze', {method:'POST',headers:{'Content-Type':'application/json'}, body:JSON.stringify({image:currentImage,type:currentType,params})});
+    const data = await res.json();
+    if (data.error) { alert(data.error); return; }
+    resultData = data;
+    imageData = data.images;
+    mainImg.src = data.images.result || data.images.gray || currentImage;
+    let s = '';
+    for (const [k,v] of Object.entries(data.summary)) {
+      if (k === 'diameters' || k === 'size_distribution') continue;
+      s += '<tr><td><b>'+k+'</b></td><td>'+(typeof v==='number'?v.toFixed(2):v)+'</td></tr>';
+    }
+    document.getElementById('summary').innerHTML = '<table>'+s+'</table>';
+    if (data.summary.diameters && data.summary.diameters.length > 0) {
+      const ctx = document.getElementById('chart').getContext('2d');
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {type:'bar', data:{labels:data.summary.diameters.map((_,i)=>'#'+(i+1)), datasets:[{label:'直径(mm)',data:data.summary.diameters}]}, options:{responsive:true,maintainAspectRatio:false}});
+    }
+  } catch(e) { alert('分析请求失败: '+e.message); }
+}
+document.getElementById('btnAnalyze').onclick = runAnalysis;
 
 document.getElementById('btnExportJSON').onclick = () => {
   if (!resultData) return;
