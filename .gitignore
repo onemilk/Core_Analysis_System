@@ -2,3 +2,6 @@
 __pycache__/
 *.db
 uploads/
+build/
+dist/
+*.spec
