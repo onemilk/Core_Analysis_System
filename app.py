@@ -13,6 +13,16 @@ app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.auto_reload = True
 
+def _sanitize(obj):
+    """Recursively convert numpy types to Python native types."""
+    import numpy as np
+    if isinstance(obj, dict): return {k: _sanitize(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)): return [_sanitize(i) for i in obj]
+    if isinstance(obj, (np.integer,)): return int(obj)
+    if isinstance(obj, (np.floating,)): return float(obj)
+    if isinstance(obj, np.ndarray): return obj.tolist()
+    return obj
+
 def load_knowledge():
     path = os.path.join(os.path.dirname(__file__), "knowledge.json")
     if os.path.exists(path):
@@ -71,7 +81,7 @@ def analyze():
                 _, buf = cv2.imencode(".png", img)
                 encoded[key] = "data:image/png;base64," + base64.b64encode(buf).decode()
 
-        return jsonify({"results": results, "summary": summary, "images": encoded})
+        return _sanitize({"results": results, "summary": summary, "images": encoded}), 200, {"Content-Type": "application/json"}
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
