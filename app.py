@@ -35,6 +35,14 @@ def analyze():
         if bgr is None:
             return jsonify({"error": "Invalid image"}), 400
 
+        # Apply ROI polygon mask
+        roi_polygon = params.pop("roi_polygon", None)
+        if roi_polygon:
+            mask = np.zeros(bgr.shape[:2], dtype=np.uint8)
+            pts = np.array([[p["x"], p["y"]] for p in roi_polygon], dtype=np.int32)
+            cv2.fillPoly(mask, [pts], 255)
+            bgr = cv2.bitwise_and(bgr, bgr, mask=mask)
+
         if analysis_type == "hole":
             results, summary, images = HoleAnalyzer.analyze(bgr, **params)
         elif analysis_type == "fracture":

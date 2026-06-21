@@ -23,6 +23,8 @@ body { font-family: "Microsoft YaHei",sans-serif; display: flex; flex-direction:
 .summary { background: #fff; padding: 12px; border-radius: 6px; margin: 8px 0; font-size: 12px; }
 .summary td { padding: 2px 8px; }
 .chart-area { padding: 12px; background: #fff; border-top: 1px solid #ddd; max-height: 200px; }
+.img-container { position: relative; display: inline-block; }
+.img-container canvas { position: absolute; top: 0; left: 0; cursor: crosshair; }
 </style>
 </head>
 <body>
@@ -33,6 +35,8 @@ body { font-family: "Microsoft YaHei",sans-serif; display: flex; flex-direction:
   <button id="btnFracture">⚡ 裂缝分析</button>
   <button id="btnGrain">📏 粒度分析</button>
   <span style="flex:1"></span>
+  <button id="btnROI">📐 框选区域</button>
+  <button id="btnClearROI" style="display:none;background:#e67e22">清除框选</button>
   <button id="btnKnowledge">📚 知识库</button>
   <button id="btnReport">📊 报告</button>
 </div>
@@ -44,7 +48,10 @@ body { font-family: "Microsoft YaHei",sans-serif; display: flex; flex-direction:
       <button data-view="gray">灰度图</button>
       <button data-view="binary">二值图</button>
     </div>
-    <img id="mainImage" src="" alt="请打开图像">
+    <div class="img-container">
+      <img id="mainImage" src="" alt="请打开图像">
+      <canvas id="roiCanvas"></canvas>
+    </div>
   </div>
   <div class="panel">
     <div id="holeParams">
