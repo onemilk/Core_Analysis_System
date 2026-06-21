@@ -9,6 +9,14 @@ document.getElementById('fileInput').onchange = e => {
   reader.readAsDataURL(f);
 };
 
+// Auto-fit ROI canvas when image loads
+mainImg.onload = () => {
+  roiCanvas.width = mainImg.clientWidth || mainImg.naturalWidth;
+  roiCanvas.height = mainImg.clientHeight || mainImg.naturalHeight;
+  roiCanvas.width = roiCanvas.width || 400;
+  roiCanvas.height = roiCanvas.height || 300;
+};
+
 ['btnHole','btnFracture','btnGrain'].forEach(id => {
   document.getElementById(id).onclick = function() {
     document.querySelectorAll('.toolbar button').forEach(b => b.classList.remove('active'));
@@ -82,11 +90,12 @@ document.getElementById('btnROI').onclick = () => {
   roiMode = !roiMode;
   if (roiMode) {
     if (!currentImage) return alert('请先打开图像');
-    roiCanvas.width = mainImg.clientWidth;
-    roiCanvas.height = mainImg.clientHeight;
+    roiCanvas.width = mainImg.clientWidth || mainImg.naturalWidth || 400;
+    roiCanvas.height = mainImg.clientHeight || mainImg.naturalHeight || 300;
     roiCanvas.style.display = 'block';
     roiPoints = [];
     roiPolygon = null;
+    mainImg.style.outline = '3px solid orange';
     document.getElementById('btnROI').textContent = '📐 点击岩石边缘(双击闭合)';
     document.getElementById('btnROI').style.background = '#e74c3c';
   } else {
@@ -154,6 +163,7 @@ clearRoiBtn.onclick = () => {
 function exitRoiMode() {
   roiMode = false;
   roiCanvas.style.display = 'none';
+  mainImg.style.outline = '';
   document.getElementById('btnROI').textContent = '📐 框选区域';
   document.getElementById('btnROI').style.background = '#3498db';
 }
