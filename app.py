@@ -13,19 +13,17 @@ app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.auto_reload = True
 
-class NumpyJSONProvider:
-    """Flask JSON provider that handles numpy types."""
-    @staticmethod
-    def default(obj):
-        import numpy as np
+from flask.json.provider import DefaultJSONProvider
+import numpy as np
+
+class NumpyProvider(DefaultJSONProvider):
+    def default(self, obj):
         if isinstance(obj, np.integer): return int(obj)
         if isinstance(obj, np.floating): return float(obj)
         if isinstance(obj, np.ndarray): return obj.tolist()
-        if isinstance(obj, np.bool_): return bool(obj)
-        if hasattr(obj, 'item'): return obj.item()
-        raise TypeError(f'Object of type {type(obj)} is not JSON serializable')
+        return super().default(obj)
 
-app.json = NumpyJSONProvider()
+app.json = NumpyProvider(app)
 
 def load_knowledge():
     path = os.path.join(os.path.dirname(__file__), "knowledge.json")
