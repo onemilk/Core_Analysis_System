@@ -81,9 +81,11 @@ def analyze():
                 _, buf = cv2.imencode(".png", img)
                 encoded[key] = "data:image/png;base64," + base64.b64encode(buf).decode()
 
-        return _sanitize({"results": results, "summary": summary, "images": encoded}), 200, {"Content-Type": "application/json"}
+        import json as _json
+        return _json.dumps(_sanitize({"results": results, "summary": summary, "images": encoded})), 200, {"Content-Type": "application/json"}
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        import json as _json, traceback
+        return _json.dumps({"error": str(e), "trace": traceback.format_exc()}), 500, {"Content-Type": "application/json"}
 
 @app.route("/api/knowledge")
 def knowledge():
