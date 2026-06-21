@@ -63,7 +63,7 @@ def analyze():
         # Draw ROI border on result image
         if roi_polygon and "result" in images:
             pts = np.array([[int(p["x"]), int(p["y"])] for p in roi_polygon], dtype=np.int32)
-            cv2.polylines(images["result"], [pts], True, (0, 255, 0), 2)
+            cv2.polylines(images["result"], [pts], True, (255, 0, 0), 2)  # blue border for ROI
 
         encoded = {}
         for key, img in images.items():
