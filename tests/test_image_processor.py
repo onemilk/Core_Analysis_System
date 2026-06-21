@@ -1,7 +1,7 @@
 """Tests for ImageProcessor"""
 import numpy as np
 import cv2
-from core_analysis.engine.image_processor import ImageProcessor
+from engine.image_processor import ImageProcessor
 
 
 def _make_test_image(w=100, h=80):

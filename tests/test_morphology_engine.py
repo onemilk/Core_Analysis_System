@@ -1,8 +1,8 @@
 """Tests for MorphologyEngine"""
 import numpy as np
 import cv2
-from core_analysis.engine.morphology_engine import MorphologyEngine
-from core_analysis.data.models import MaskRegion
+from engine.morphology_engine import MorphologyEngine
+from engine.models import MaskRegion
 
 
 def _make_square_region():

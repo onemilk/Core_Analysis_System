@@ -1,8 +1,8 @@
 """Tests for GrainAnalyzer"""
 import numpy as np
 import cv2
-from core_analysis.engine.grain_analyzer import GrainAnalyzer
-from core_analysis.data.models import MaskRegion
+from engine.grain_analyzer import GrainAnalyzer
+from engine.models import MaskRegion
 
 
 def _make_circular_region():

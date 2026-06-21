@@ -1,7 +1,7 @@
 """Tests for RegionExtractor"""
 import numpy as np
 import cv2
-from core_analysis.engine.region_extractor import RegionExtractor
+from engine.region_extractor import RegionExtractor
 
 
 def _make_image_with_holes():
