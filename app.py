@@ -37,13 +37,14 @@ def analyze():
         if bgr is None:
             return jsonify({"error": "Invalid image"}), 400
 
-        # Apply ROI polygon mask
+        # Apply ROI polygon mask — set outside to white (rock color), not black
         roi_polygon = params.pop("roi_polygon", None)
         if roi_polygon:
             mask = np.zeros(bgr.shape[:2], dtype=np.uint8)
             pts = np.array([[p["x"], p["y"]] for p in roi_polygon], dtype=np.int32)
             cv2.fillPoly(mask, [pts], 255)
-            bgr = cv2.bitwise_and(bgr, bgr, mask=mask)
+            # White-out everything outside the polygon
+            bgr[mask == 0] = (255, 255, 255)
 
         if analysis_type == "hole":
             results, summary, images = HoleAnalyzer.analyze(bgr, **params)
