@@ -1,0 +1,28 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>沉积知识库</title>
+<style>body{font-family:"Microsoft YaHei",sans-serif;padding:20px;max-width:800px;margin:0 auto}
+input{padding:8px;width:100%;margin-bottom:12px;font-size:14px}
+.entry{margin:12px 0;padding:12px;border-left:3px solid #3498db;background:#f8f9fa}
+.entry h3{margin:0 0 4px}.entry p{margin:4px 0;font-size:13px;color:#555}
+.related a{color:#3498db;margin-right:8px;font-size:12px;cursor:pointer}</style></head><body>
+<h2>沉积知识库</h2><input type="text" id="search" placeholder="搜索..." oninput="filter()">
+<div id="entries"></div>
+<script>
+fetch('/api/knowledge').then(r=>r.json()).then(data=>{
+  window.kb=data.categories;
+  renderAll();
+});
+function renderAll(filter=''){
+  document.getElementById('entries').innerHTML='';
+  let html='';
+  for(const[cat,entries] of Object.entries(window.kb)){
+    for(const[name,item] of Object.entries(entries)){
+      if(filter && !name.includes(filter) && !(item.definition||'').includes(filter)) continue;
+      html+=`<div class="entry"><h3>${name}</h3><p>${item.definition||''}</p>
+        <div class="related">${(item.related||[]).map(r=>`<a href="javascript:searchRel('${r}')">${r}</a>`).join('')}</div></div>`;
+    }
+  }
+  document.getElementById('entries').innerHTML=html||'<p>无匹配结果</p>';
+}
+function filter(){renderAll(document.getElementById('search').value);}
+function searchRel(t){document.getElementById('search').value=t;filter();}
+</script></body></html>

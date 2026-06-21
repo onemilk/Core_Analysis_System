@@ -70,3 +70,6 @@ document.getElementById('btnExportCSV').onclick = () => {
   const blob = new Blob([csv], {type:'text/csv'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'analysis.csv'; a.click();
 };
+
+document.getElementById('btnKnowledge').onclick = () => window.open('/knowledge', '_blank');
+document.getElementById('btnReport').onclick = () => window.open('/report', '_blank');
