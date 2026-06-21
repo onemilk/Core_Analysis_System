@@ -84,7 +84,11 @@ def analyze():
                 encoded[key] = "data:image/png;base64," + base64.b64encode(buf).decode()
 
         import json as _json
-        return _json.dumps(_sanitize({"results": results, "summary": summary, "images": encoded})), 200, {"Content-Type": "application/json"}
+        def _conv(o):
+            if hasattr(o, 'item'): return o.item()
+            if hasattr(o, 'tolist'): return o.tolist()
+            return float(o)
+        return _json.dumps({"results": results, "summary": summary, "images": encoded}, default=_conv), 200, {"Content-Type": "application/json"}
     except Exception as e:
         import json as _json, traceback
         return _json.dumps({"error": str(e), "trace": traceback.format_exc()}), 500, {"Content-Type": "application/json"}
