@@ -30,7 +30,7 @@ class HoleAnalyzer:
             areas.append(area)
             diameters.append(d_mm)
             circularities.append(circularity)
-            results.append({"area_px": area, "area_mm2": area_mm2, "diameter_mm": d_mm, "circularity": circularity})
+            results.append({"area_px": float(area), "area_mm2": float(area_mm2), "diameter_mm": float(d_mm), "circularity": float(circularity)})
 
         n = len(results)
         total_area_mm2 = sum(r["area_mm2"] for r in results)
@@ -38,16 +38,17 @@ class HoleAnalyzer:
         image_area_mm2 = image_area_px * (scale_mm_per_px ** 2)
         porosity = (total_area_mm2 / image_area_mm2 * 100) if image_area_mm2 > 0 else 0
         summary = {
-            "hole_count": n, "total_area": round(total_area_mm2, 2),
-            "avg_area": round(total_area_mm2 / n, 2) if n > 0 else 0,
-            "avg_circularity": round(float(np.mean(circularities)), 4) if circularities else 0,
-            "avg_diameter_mm": round(float(np.mean(diameters)), 4) if diameters else 0,
-            "max_diameter_mm": round(max(diameters), 4) if diameters else 0,
-            "min_diameter_mm": round(min(diameters), 4) if diameters else 0,
-            "porosity_percent": round(porosity, 2), "diameters": diameters,
-            "size_distribution": {"大洞(>10mm)": sum(1 for d in diameters if d > 10),
-                                  "中洞(5-10mm)": sum(1 for d in diameters if 5 <= d <= 10),
-                                  "小洞(1-5mm)": sum(1 for d in diameters if 1 <= d < 5),
-                                  "针孔(<1mm)": sum(1 for d in diameters if d < 1)}
+            "hole_count": int(n), "total_area": float(round(total_area_mm2, 2)),
+            "avg_area": float(round(total_area_mm2 / n, 2)) if n > 0 else 0.0,
+            "avg_circularity": float(round(float(np.mean(circularities)), 4)) if circularities else 0.0,
+            "avg_diameter_mm": float(round(float(np.mean(diameters)), 4)) if diameters else 0.0,
+            "max_diameter_mm": float(round(float(max(diameters)), 4)) if diameters else 0.0,
+            "min_diameter_mm": float(round(float(min(diameters)), 4)) if diameters else 0.0,
+            "porosity_percent": float(round(porosity, 2)),
+            "diameters": [float(d) for d in diameters],
+            "size_distribution": {"大洞(>10mm)": int(sum(1 for d in diameters if d > 10)),
+                                  "中洞(5-10mm)": int(sum(1 for d in diameters if 5 <= d <= 10)),
+                                  "小洞(1-5mm)": int(sum(1 for d in diameters if 1 <= d < 5)),
+                                  "针孔(<1mm)": int(sum(1 for d in diameters if d < 1))}
         }
         return results, summary, {"gray": gray, "binary": binary, "result": result_img}

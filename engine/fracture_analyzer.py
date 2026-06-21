@@ -54,10 +54,20 @@ class FractureAnalyzer:
 
         n = len(results)
         summary = {
-            "crack_count": n, "total_area": sum(r["area_px"] for r in results),
-            "avg_width": round(float(np.mean(widths)), 2) if widths else 0,
-            "max_width": round(max(widths), 2) if widths else 0,
-            "max_length": round(max(lengths), 2) if lengths else 0,
-            "avg_length": round(float(np.mean(lengths)), 2) if lengths else 0,
+            "crack_count": int(n),
+            "total_area": float(sum(r["area_px"] for r in results)),
+            "avg_width": float(round(float(np.mean(widths)), 2)) if widths else 0.0,
+            "max_width": float(round(float(max(widths)), 2)) if widths else 0.0,
+            "max_length": float(round(float(max(lengths)), 2)) if lengths else 0.0,
+            "avg_length": float(round(float(np.mean(lengths)), 2)) if lengths else 0.0,
         }
-        return results, summary, {"gray": enhanced, "binary": binary, "result": result_img}
+        # Ensure all results use native Python types
+        clean_results = []
+        for r in results:
+            clean_results.append({
+                "area_px": float(r["area_px"]),
+                "length_px": float(r["length_px"]),
+                "width_px": float(r["width_px"]),
+                "solidity": float(r["solidity"])
+            })
+        return clean_results, summary, {"gray": enhanced, "binary": binary, "result": result_img}
