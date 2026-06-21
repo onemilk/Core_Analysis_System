@@ -88,10 +88,12 @@ def analyze():
             if hasattr(o, 'item'): return o.item()
             if hasattr(o, 'tolist'): return o.tolist()
             return float(o)
-        return _json.dumps({"results": results, "summary": summary, "images": encoded}, default=_conv), 200, {"Content-Type": "application/json"}
+        from flask import Response
+        return Response(_json.dumps({"results": results, "summary": summary, "images": encoded}, default=_conv), mimetype='application/json')
     except Exception as e:
         import json as _json, traceback
-        return _json.dumps({"error": str(e), "trace": traceback.format_exc()}), 500, {"Content-Type": "application/json"}
+        from flask import Response
+        return Response(_json.dumps({"error": str(e), "trace": traceback.format_exc()}), status=500, mimetype='application/json')
 
 @app.route("/api/knowledge")
 def knowledge():
