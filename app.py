@@ -13,17 +13,19 @@ app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.auto_reload = True
 
-def _sanitize(obj):
-    """Recursively convert numpy types to Python native types."""
-    import numpy as np
-    if isinstance(obj, dict): return {k: _sanitize(v) for k, v in obj.items()}
-    if isinstance(obj, (list, tuple)): return [_sanitize(i) for i in obj]
-    if isinstance(obj, np.ndarray): return obj.tolist()
-    if isinstance(obj, np.integer): return int(obj)
-    if isinstance(obj, np.floating): return float(obj)
-    if isinstance(obj, np.bool_): return bool(obj)
-    if hasattr(obj, 'item'): return obj.item()
-    return str(obj) if type(obj).__module__ == 'numpy' else obj
+class NumpyJSONProvider:
+    """Flask JSON provider that handles numpy types."""
+    @staticmethod
+    def default(obj):
+        import numpy as np
+        if isinstance(obj, np.integer): return int(obj)
+        if isinstance(obj, np.floating): return float(obj)
+        if isinstance(obj, np.ndarray): return obj.tolist()
+        if isinstance(obj, np.bool_): return bool(obj)
+        if hasattr(obj, 'item'): return obj.item()
+        raise TypeError(f'Object of type {type(obj)} is not JSON serializable')
+
+app.json = NumpyJSONProvider()
 
 def load_knowledge():
     path = os.path.join(os.path.dirname(__file__), "knowledge.json")
@@ -83,17 +85,10 @@ def analyze():
                 _, buf = cv2.imencode(".png", img)
                 encoded[key] = "data:image/png;base64," + base64.b64encode(buf).decode()
 
-        import json as _json
-        def _conv(o):
-            if hasattr(o, 'item'): return o.item()
-            if hasattr(o, 'tolist'): return o.tolist()
-            return float(o)
-        from flask import Response
-        return Response(_json.dumps({"results": results, "summary": summary, "images": encoded}, default=_conv), mimetype='application/json')
+        return jsonify({"results": results, "summary": summary, "images": encoded})
     except Exception as e:
-        import json as _json, traceback
-        from flask import Response
-        return Response(_json.dumps({"error": str(e), "trace": traceback.format_exc()}), status=500, mimetype='application/json')
+        import traceback
+        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
 
 @app.route("/api/knowledge")
 def knowledge():
