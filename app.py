@@ -19,8 +19,8 @@ def _sanitize(obj):
     if isinstance(obj, dict): return {k: _sanitize(v) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)): return [_sanitize(i) for i in obj]
     if isinstance(obj, np.ndarray): return obj.tolist()
-    if isinstance(obj, (np.integer, np.int_)): return int(obj)
-    if isinstance(obj, (np.floating, np.float_)): return float(obj)
+    if isinstance(obj, np.integer): return int(obj)
+    if isinstance(obj, np.floating): return float(obj)
     if isinstance(obj, np.bool_): return bool(obj)
     if hasattr(obj, 'item'): return obj.item()
     return str(obj) if type(obj).__module__ == 'numpy' else obj
