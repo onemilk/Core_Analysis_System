@@ -83,7 +83,17 @@ def analyze():
                 _, buf = cv2.imencode(".png", img)
                 encoded[key] = "data:image/png;base64," + base64.b64encode(buf).decode()
 
-        return jsonify({"results": results, "summary": summary, "images": encoded})
+        import json as _j
+        def _clean(o):
+            import numpy as _n
+            if isinstance(o, dict): return {k: _clean(v) for k, v in o.items()}
+            if isinstance(o, (list, tuple)): return [_clean(i) for i in o]
+            if isinstance(o, (_n.integer,)): return int(o)
+            if isinstance(o, (_n.floating,)): return float(o)
+            if isinstance(o, _n.ndarray): return o.tolist()
+            if hasattr(o, 'item') and callable(o.item): return o.item()
+            return o
+        return _j.dumps(_clean({"results": results, "summary": summary, "images": encoded})), 200, {'Content-Type': 'application/json'}
     except Exception as e:
         import traceback
         return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
