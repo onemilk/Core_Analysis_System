@@ -10,6 +10,8 @@ from engine.region_extractor import RegionExtractor
 from engine.morphology_engine import MorphologyEngine
 
 app = Flask(__name__)
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.jinja_env.auto_reload = True
 
 def load_knowledge():
     path = os.path.join(os.path.dirname(__file__), "knowledge.json")
