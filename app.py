@@ -13,6 +13,9 @@ app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.auto_reload = True
 
+# In-memory report storage for pywebview window.open
+_report_store = {}
+
 from flask.json.provider import DefaultJSONProvider
 import numpy as np
 
@@ -98,6 +101,20 @@ def analyze():
 @app.route("/api/knowledge")
 def knowledge():
     return jsonify(load_knowledge())
+
+import uuid
+
+@app.route("/api/report/save", methods=["POST"])
+def save_report():
+    """Store report HTML and return a unique URL for pywebview window.open."""
+    rid = str(uuid.uuid4())[:8]
+    _report_store[rid] = request.data.decode('utf-8') if isinstance(request.data, bytes) else request.data
+    return jsonify({"url": f"/report/{rid}"})
+
+@app.route("/report/<rid>")
+def view_report(rid):
+    html = _report_store.get(rid, "<h1>报告已过期</h1>")
+    return html
 
 @app.route("/report")
 def report_page():

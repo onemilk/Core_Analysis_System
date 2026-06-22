@@ -281,26 +281,11 @@ document.getElementById('btnReport').onclick = () => {
   html += 'new Chart(document.getElementById(\"rptChart\"),{type:\"bar\",data:{labels:_labels,datasets:[{label:\"直径(mm)\",data:_diameters}]},options:{responsive:true}});}';
   html += '</script></body></html>';
 
-  // Inline report in iframe (works with pywebview)
-  let frame = document.getElementById('reportFrame');
-  if (!frame) {
-    frame = document.createElement('iframe');
-    frame.id = 'reportFrame';
-    frame.style.cssText = 'position:fixed;top:40px;left:0;width:100%;height:calc(100vh-40px);border:none;z-index:1000;background:#fff;display:none';
-    document.body.appendChild(frame);
-    const cb = document.createElement('button');
-    cb.id = 'btnCloseReport';
-    cb.textContent = '✕ 关闭';
-    cb.style.cssText = 'display:none;position:fixed;top:42px;right:16px;z-index:1001;padding:6px 14px;background:#e74c3c;color:#fff;border:none;border-radius:4px;cursor:pointer';
-    cb.onclick = () => { frame.style.display='none'; cb.style.display='none'; };
-    document.body.appendChild(cb);
-  }
-  frame.style.display = 'block';
-  document.getElementById('btnCloseReport').style.display = 'inline-block';
-  frame.contentDocument.open();
-  frame.contentDocument.write(html);
-  frame.contentDocument.close();
-  window._reportHTML = html;
+  // Save report to server and open in new pywebview window
+  fetch('/api/report/save', {method:'POST', body: html}).then(r => r.json()).then(data => {
+    window._reportHTML = html;
+    window.open(data.url, '_blank');
+  });
 };
 function statRow(label, val, unit) {
   const v = val != null ? (typeof val === 'number' ? val.toFixed(2) : val) : '—';
