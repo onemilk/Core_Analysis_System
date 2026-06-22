@@ -217,7 +217,23 @@ document.getElementById('btnReport').onclick = () => {
     html += '</table>';
   }
 
-  html += '<h2>三、附图</h2>';
+  // Detail table
+  if (d.results && d.results.length > 0) {
+    const first = d.results[0];
+    if ('diameter_mm' in first) {
+      html += '<h2>三、孔洞明细</h2><table><tr><th>序号</th><th>面积(mm²)</th><th>等效直径(mm)</th><th>圆形度</th></tr>';
+      d.results.forEach((r,i) => { html += '<tr><td>'+(i+1)+'</td><td>'+r.area_mm2.toFixed(4)+'</td><td>'+r.diameter_mm.toFixed(4)+'</td><td>'+r.circularity.toFixed(4)+'</td></tr>'; });
+    } else if ('length_px' in first) {
+      html += '<h2>三、裂缝明细</h2><table><tr><th>序号</th><th>长度(px)</th><th>宽度(px)</th><th>面积(px²)</th><th>实体度</th></tr>';
+      d.results.forEach((r,i) => { html += '<tr><td>'+(i+1)+'</td><td>'+r.length_px.toFixed(2)+'</td><td>'+r.width_px.toFixed(2)+'</td><td>'+r.area_px.toFixed(2)+'</td><td>'+r.solidity.toFixed(4)+'</td></tr>'; });
+    } else if ('d_mm' in first) {
+      html += '<h2>三、颗粒明细</h2><table><tr><th>序号</th><th>直径(mm)</th><th>Feret长轴</th><th>Feret短轴</th><th>圆度</th><th>粒级</th></tr>';
+      d.results.forEach((r,i) => { html += '<tr><td>'+(i+1)+'</td><td>'+r.d_mm.toFixed(4)+'</td><td>'+r.feret_long.toFixed(4)+'</td><td>'+r.feret_short.toFixed(4)+'</td><td>'+r.circularity.toFixed(4)+'</td><td>'+r.size+'</td></tr>'; });
+    }
+    html += '</table>';
+  }
+
+  html += '<h2>四、附图</h2>';
   if (d.images && d.images.result) {
     html += '<div class=chart><img src="'+d.images.result+'"><p style=color:#888;font-size:12px>结果标记图</p></div>';
   }
