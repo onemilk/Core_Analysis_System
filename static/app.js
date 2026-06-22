@@ -169,4 +169,24 @@ function exitRoiMode() {
 }
 
 document.getElementById('btnKnowledge').onclick = () => window.open('/knowledge', '_blank');
-document.getElementById('btnReport').onclick = () => window.open('/report', '_blank');
+document.getElementById('btnReport').onclick = () => {
+  if (!resultData) return alert('请先完成分析');
+  const d = resultData;
+  const s = d.summary || {};
+  let html = '<!DOCTYPE html><html lang=zh-CN><head><meta charset=UTF-8><title>分析报告</title>';
+  html += '<style>body{font-family:"Microsoft YaHei",sans-serif;padding:20px} h1{text-align:center}';
+  html += 'table{border-collapse:collapse;width:100%;margin:8px 0} th,td{border:1px solid #666;padding:6px} th{background:#f0f0f0}</style></head><body>';
+  html += '<h1>岩心分析报告</h1><h2>统计摘要</h2><table>';
+  for (const [k,v] of Object.entries(s)) {
+    if (k === 'diameters' || k === 'size_distribution') continue;
+    html += '<tr><td><b>'+k+'</b></td><td>'+(typeof v==='number'?v.toFixed(2):JSON.stringify(v))+'</td></tr>';
+  }
+  html += '</table>';
+  if (d.images && d.images.result) {
+    html += '<h2>结果图</h2><img src="'+d.images.result+'" style="max-width:100%">';
+  }
+  html += '<p style="color:#999;margin-top:20px">生成时间: '+new Date().toLocaleString()+'</p></body></html>';
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+};
