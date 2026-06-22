@@ -25,8 +25,11 @@ mainImg.onload = () => {
     document.querySelectorAll('.toolbar button').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
     currentType = this.id === 'btnHole' ? 'hole' : this.id === 'btnFracture' ? 'fracture' : 'grain';
+    document.getElementById('holeParams').style.display = (currentType==='hole'||currentType==='fracture')?'':'none';
+    document.getElementById('grainParams').style.display = currentType==='grain'?'':'none';
   };
 });
+document.getElementById('blockSize').oninput = function() { document.getElementById('blockSizeVal').textContent = this.value; };
 
 document.getElementById('threshold').oninput = function() { document.getElementById('thresholdVal').textContent = this.value; };
 
@@ -44,10 +47,16 @@ async function runAnalysis() {
   if (!currentImage) { alert('请先打开图像'); return; }
   if (roiMode) { alert('请双击闭合多边形后再分析'); return; }
   const params = {};
-  if (currentType === 'hole') params.threshold = +document.getElementById('threshold').value;
-  params.min_area = +document.getElementById('minArea').value;
-  params.max_area = +document.getElementById('maxArea').value;
-  params.scale_mm_per_px = +document.getElementById('scale').value;
+  if (currentType === 'hole' || currentType === 'fracture') {
+    params.threshold = +document.getElementById('threshold').value;
+    params.min_area = +document.getElementById('minArea').value;
+    params.max_area = +document.getElementById('maxArea').value;
+    params.scale_mm_per_px = +document.getElementById('scale').value;
+  } else if (currentType === 'grain') {
+    params.min_area = +document.getElementById('grainMinArea').value;
+    params.block_size = +document.getElementById('blockSize').value;
+    params.scale = +document.getElementById('grainScale').value;
+  }
   if (roiPolygon && roiPolygon.length >= 3) params.roi_polygon = roiPolygon;
 
   try {
@@ -171,79 +180,112 @@ function exitRoiMode() {
 document.getElementById('btnKnowledge').onclick = () => window.open('/knowledge', '_blank');
 document.getElementById('btnReport').onclick = () => {
   if (!resultData) return alert('请先完成分析');
-  const d = resultData;
-  const s = d.summary || {};
-  const labels = {
-    hole_count:'孔洞数量(个)', total_area:'总面积(mm²)', avg_area:'平均面积(mm²)',
-    avg_circularity:'平均圆形度', avg_diameter_mm:'平均直径(mm)', max_diameter_mm:'最大直径(mm)',
-    min_diameter_mm:'最小直径(mm)', porosity_percent:'面孔率(%)',
-    crack_count:'裂缝数量(条)', avg_width:'平均宽度(px)', max_width:'最大宽度(px)',
-    max_length:'最大长度(px)', avg_length:'平均长度(px)'
-  };
-  const typeNames = {hole:'孔洞分析', fracture:'裂缝分析', grain:'粒度分析'};
+  const d = resultData, s = d.summary || {};
   const now = new Date().toLocaleString();
-  let html = '<!DOCTYPE html><html lang=zh-CN><head><meta charset=UTF-8><title>岩心分析报告</title>';
-  html += '<style>body{font-family:"Microsoft YaHei",sans-serif;padding:30px;color:#333;max-width:900px;margin:0 auto}';
-  html += 'h1{text-align:center;font-size:20px;border-bottom:2px solid #2c3e50;padding-bottom:12px}';
-  html += 'h2{font-size:16px;border-bottom:1px solid #ccc;margin-top:28px;padding-bottom:6px}';
-  html += 'table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}';
-  html += 'th,td{border:1px solid #999;padding:6px 10px;text-align:left}';
-  html += 'th{background:#2c3e50;color:#fff}';
-  html += 'tr:nth-child(even){background:#f5f5f5}';
-  html += '.info td{border:none;padding:4px 10px}';
-  html += '.chart{text-align:center;margin:20px 0}';
-  html += '.chart img{max-width:100%;border:1px solid #ddd}';
-  html += '.footer{text-align:center;color:#999;margin-top:30px;font-size:12px}</style></head><body>';
+  const css = '<style>body{font-family:"Microsoft YaHei",sans-serif;padding:30px;color:#333;max-width:900px;margin:0 auto}'+
+    'h1{text-align:center;font-size:20px;border-bottom:2px solid #2c3e50;padding-bottom:12px}'+
+    'h2{font-size:16px;border-bottom:1px solid #ccc;margin-top:28px;padding-bottom:6px}'+
+    'table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}'+
+    'th,td{border:1px solid #999;padding:6px 10px;text-align:left}'+
+    'th{background:#2c3e50;color:#fff} tr:nth-child(even){background:#f5f5f5}'+
+    '.info td{border:none;padding:4px 10px} .chart{text-align:center;margin:20px 0}'+
+    '.chart img{max-width:100%;border:1px solid #ddd}'+
+    '.footer{text-align:center;color:#999;margin-top:30px;font-size:12px}</style>';
+  let html = '<!DOCTYPE html><html lang=zh-CN><head><meta charset=UTF-8><title>岩心分析报告</title>'+css+'</head><body>';
 
-  html += '<h1>碳酸盐岩岩心'+ (typeNames[currentType]||'分析') +'报告</h1>';
-  html += '<h2>基础信息</h2><table class=info>';
-  html += '<tr><td><b>分析类型</b></td><td>'+ (typeNames[currentType]||currentType) +'</td><td><b>生成时间</b></td><td>'+now+'</td></tr></table>';
-
-  html += '<h2>一、检测统计</h2><table>';
-  for (const [k,v] of Object.entries(s)) {
-    if (k==='diameters'||k==='size_distribution') continue;
-    const label = labels[k] || k;
-    html += '<tr><td><b>'+label+'</b></td><td>'+(typeof v==='number'?v.toFixed(2):JSON.stringify(v))+'</td></tr>';
-  }
-  html += '</table>';
-
-  if (s.size_distribution) {
-    html += '<h2>二、大小分布</h2><table>';
-    const distLabels = {'大洞(>10mm)':'大洞(>10mm)','中洞(5-10mm)':'中洞(5-10mm)','小洞(1-5mm)':'小洞(1-4.9mm)','针孔(<1mm)':'针孔(<1mm)',
-      '砾':'砾(>2mm)','砂':'砂(0.0625-2mm)','粉砂':'粉砂(0.0039-0.0625mm)','泥':'泥(<0.0039mm)'};
-    for (const [k,v] of Object.entries(s.size_distribution)) {
-      html += '<tr><td>'+ (distLabels[k]||k) +'</td><td>'+v+' 个</td></tr>';
-    }
+  // ── Hole Report ──
+  if (currentType === 'hole') {
+    html += '<h1>碳酸盐岩岩心孔洞分析报告</h1>';
+    html += '<h2>基础信息</h2><table class=info><tr><td><b>分析类型</b></td><td>孔洞分析</td><td><b>生成时间</b></td><td>'+now+'</td></tr></table>';
+    html += '<h2>一、孔洞检测统计</h2><table><tr><th>指标</th><th>值</th><th>单位</th></tr>';
+    html += statRow('孔洞总数', s.hole_count, '个');
+    html += statRow('孔洞总面积', s.total_area, 'mm²');
+    html += statRow('平均面积', s.avg_area, 'mm²');
+    html += statRow('面孔率', s.porosity_percent, '%');
+    html += statRow('平均等效直径', s.avg_diameter_mm, 'mm');
+    html += statRow('最大等效直径', s.max_diameter_mm, 'mm');
+    html += statRow('最小等效直径', s.min_diameter_mm, 'mm');
     html += '</table>';
-  }
-
-  // Detail table
-  if (d.results && d.results.length > 0) {
-    const first = d.results[0];
-    if ('diameter_mm' in first) {
+    if (s.size_distribution) {
+      html += '<h2>二、孔洞大小分布</h2><table><tr><th>分类</th><th>孔径范围</th><th>数量</th><th>占比</th></tr>';
+      const cats = ['大洞(>10mm)','中洞(5-10mm)','小洞(1-5mm)','针孔(<1mm)'];
+      const ranges = ['>10mm','5-10mm','1-4.9mm','<1mm'];
+      const total = s.hole_count || 1;
+      cats.forEach((c,i) => { html += '<tr><td>'+c.replace(/\(.*\)/,'')+'</td><td>'+ranges[i]+'</td><td>'+(s.size_distribution[c]||0)+'</td><td>'+((s.size_distribution[c]||0)/total*100).toFixed(1)+'%</td></tr>'; });
+      html += '</table>';
+    }
+    if (d.results && d.results.length > 0) {
       html += '<h2>三、孔洞明细</h2><table><tr><th>序号</th><th>面积(mm²)</th><th>等效直径(mm)</th><th>圆形度</th></tr>';
-      d.results.forEach((r,i) => { html += '<tr><td>'+(i+1)+'</td><td>'+r.area_mm2.toFixed(4)+'</td><td>'+r.diameter_mm.toFixed(4)+'</td><td>'+r.circularity.toFixed(4)+'</td></tr>'; });
-    } else if ('length_px' in first) {
-      html += '<h2>三、裂缝明细</h2><table><tr><th>序号</th><th>长度(px)</th><th>宽度(px)</th><th>面积(px²)</th><th>实体度</th></tr>';
-      d.results.forEach((r,i) => { html += '<tr><td>'+(i+1)+'</td><td>'+r.length_px.toFixed(2)+'</td><td>'+r.width_px.toFixed(2)+'</td><td>'+r.area_px.toFixed(2)+'</td><td>'+r.solidity.toFixed(4)+'</td></tr>'; });
-    } else if ('d_mm' in first) {
-      html += '<h2>三、颗粒明细</h2><table><tr><th>序号</th><th>直径(mm)</th><th>Feret长轴</th><th>Feret短轴</th><th>圆度</th><th>粒级</th></tr>';
-      d.results.forEach((r,i) => { html += '<tr><td>'+(i+1)+'</td><td>'+r.d_mm.toFixed(4)+'</td><td>'+r.feret_long.toFixed(4)+'</td><td>'+r.feret_short.toFixed(4)+'</td><td>'+r.circularity.toFixed(4)+'</td><td>'+r.size+'</td></tr>'; });
+      d.results.forEach((r,i) => { html += '<tr><td>'+(i+1)+'</td><td>'+r.diameter_mm?r.area_mm2.toFixed(4):r.area_mm2.toFixed(4)+'</td><td>'+r.diameter_mm.toFixed(4)+'</td><td>'+r.circularity.toFixed(4)+'</td></tr>'; });
+      html += '</table>';
     }
+  }
+  // ── Fracture Report ──
+  else if (currentType === 'fracture') {
+    html += '<h1>碳酸盐岩岩心裂缝分析报告</h1>';
+    html += '<h2>基础信息</h2><table class=info><tr><td><b>分析类型</b></td><td>裂缝分析</td><td><b>生成时间</b></td><td>'+now+'</td></tr></table>';
+    html += '<h2>一、裂缝检测统计</h2><table><tr><th>指标</th><th>值</th><th>单位</th></tr>';
+    html += statRow('裂缝总条数', s.crack_count, '条');
+    html += statRow('裂缝总面积', s.total_area, 'px²');
+    html += statRow('平均宽度', s.avg_width, 'px');
+    html += statRow('最大宽度', s.max_width, 'px');
+    html += statRow('平均长度', s.avg_length, 'px');
+    html += statRow('最大长度', s.max_length, 'px');
     html += '</table>';
+    if (d.results && d.results.length > 0) {
+      html += '<h2>二、裂缝明细</h2><table><tr><th>序号</th><th>长度(px)</th><th>宽度(px)</th><th>面积(px²)</th><th>实体度</th></tr>';
+      d.results.forEach((r,i) => { html += '<tr><td>'+(i+1)+'</td><td>'+r.length_px.toFixed(2)+'</td><td>'+r.width_px.toFixed(2)+'</td><td>'+r.area_px.toFixed(2)+'</td><td>'+r.solidity.toFixed(4)+'</td></tr>'; });
+      html += '</table>';
+    }
+  }
+  // ── Grain Report ──
+  else if (currentType === 'grain') {
+    html += '<h1>砾岩岩心粒度分析报告</h1>';
+    html += '<h2>基础信息</h2><table class=info><tr><td><b>分析类型</b></td><td>粒度分析</td><td><b>生成时间</b></td><td>'+now+'</td></tr></table>';
+    html += '<h2>一、粒度检测统计</h2><table><tr><th>指标</th><th>值</th><th>单位</th></tr>';
+    html += statRow('颗粒总数', s.total_count, '个');
+    html += statRow('平均粒径', s.avg_diameter_mm, 'mm');
+    html += statRow('中值粒径 (D50)', s.d50_mm, 'mm');
+    html += statRow('D10', s.d10_mm, 'mm');
+    html += statRow('D90', s.d90_mm, 'mm');
+    html += statRow('标准偏差', s.std_dev_mm, 'mm');
+    html += statRow('最大粒径', s.max_diameter_mm, 'mm');
+    html += statRow('最小粒径', s.min_diameter_mm, 'mm');
+    html += '</table>';
+    if (s.size_distribution) {
+      html += '<h2>二、粒度分布 (Udden-Wentworth)</h2><table><tr><th>粒级</th><th>粒径范围</th><th>数量</th><th>占比</th></tr>';
+      const cats = ['砾','砂','粉砂','泥'], ranges = ['>2mm','0.0625-2mm','0.0039-0.0625mm','<0.0039mm'];
+      const total = s.total_count || 1;
+      cats.forEach((c,i) => { html += '<tr><td>'+c+'</td><td>'+ranges[i]+'</td><td>'+(s.size_distribution[c]||0)+'</td><td>'+((s.size_distribution[c]||0)/total*100).toFixed(1)+'%</td></tr>'; });
+      html += '</table>';
+    }
+    if (d.results && d.results.length > 0) {
+      html += '<h2>三、颗粒明细</h2><table><tr><th>序号</th><th>直径(mm)</th><th>Feret长轴(mm)</th><th>Feret短轴(mm)</th><th>圆度</th><th>粒级</th></tr>';
+      d.results.forEach((r,i) => { html += '<tr><td>'+(i+1)+'</td><td>'+r.d_mm.toFixed(4)+'</td><td>'+r.feret_long.toFixed(4)+'</td><td>'+r.feret_short.toFixed(4)+'</td><td>'+r.circularity.toFixed(4)+'</td><td>'+r.size+'</td></tr>'; });
+      html += '</table>';
+    }
   }
 
-  html += '<h2>四、附图</h2>';
-  if (d.images && d.images.result) {
-    html += '<div class=chart><img src="'+d.images.result+'"><p style=color:#888;font-size:12px>结果标记图</p></div>';
-  }
-  if (d.images && d.images.binary) {
-    html += '<div class=chart><img src="'+d.images.binary+'"><p style=color:#888;font-size:12px>二值化图</p></div>';
-  }
+  html += '<h2>附图</h2>';
+  if (d.images && d.images.result) html += '<div class=chart><img src="'+d.images.result+'"><p>结果标记图</p></div>';
+  if (d.images && d.images.binary) html += '<div class=chart><img src="'+d.images.binary+'"><p>二值化图</p></div>';
 
-  html += '<div class=footer>岩心孔洞裂缝分析系统 v1.0 &copy; '+new Date().getFullYear()+'</div>';
+  // Chart canvas for histogram
+  if (s.diameters && s.diameters.length > 0) {
+    html += '<h2>粒径分布直方图</h2><div class=chart><canvas id=rptChart width=800 height=400></canvas></div>';
+  }
+  html += '<div class=footer>岩心孔洞裂缝分析系统 v1.0</div>';
+  html += '<script src=\"https://cdn.jsdelivr.net/npm/chart.js@4\"></script>';
+  html += '<script>var _diameters='+JSON.stringify(s.diameters||[])+';';
+  html += 'var _labels=_diameters.map((_,i)=>\"#\"+(i+1));';
+  html += 'new Chart(document.getElementById(\"rptChart\"),{type:\"bar\",data:{labels:_labels,datasets:[{label:\"直径(mm)\",data:_diameters}]},options:{responsive:true}});';
+  html += '</script>';
   html += '</body></html>';
   const w = window.open('', '_blank');
   w.document.write(html);
   w.document.close();
 };
+function statRow(label, val, unit) {
+  const v = val != null ? (typeof val === 'number' ? val.toFixed(2) : val) : '—';
+  return '<tr><td><b>'+label+'</b></td><td>'+v+'</td><td>'+unit+'</td></tr>';
+}

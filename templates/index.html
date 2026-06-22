@@ -61,6 +61,12 @@ body { font-family: "Microsoft YaHei",sans-serif; display: flex; flex-direction:
       <label>最大面积(px)</label><input type="number" id="maxArea" value="10000">
       <label>标尺(mm/px)</label><input type="number" id="scale" value="0.05" step="0.01">
     </div>
+    <div id="grainParams" style="display:none">
+      <label>最小颗粒面积(px)</label><input type="number" id="grainMinArea" value="50">
+      <label>分水岭灵敏度(11-51)</label><input type="range" id="blockSize" min="11" max="51" step="2" value="21">
+      <span id="blockSizeVal">31</span>
+      <label>标尺(mm/px)</label><input type="number" id="grainScale" value="0.05" step="0.01">
+    </div>
     <button id="btnAnalyze">🔍 开始分析</button>
     <div class="summary" id="summary"><i>等待分析...</i></div>
     <button id="btnExportJSON">📥 导出JSON</button>

@@ -62,13 +62,10 @@ def analyze():
         elif analysis_type == "fracture":
             results, summary, images = FractureAnalyzer.analyze(bgr, **params)
         elif analysis_type == "grain":
-            gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
-            center_color = bgr[gray.shape[0]//2, gray.shape[1]//2]
-            regions = RegionExtractor.extract_by_color_sample(bgr, center_color, params.get("tolerance", 30))
-            regions = MorphologyEngine.denoise_by_area(regions, params.get("denoise", 10))
-            grain_results, summary = GrainAnalyzer.analyze(regions, params.get("scale", 0.05), gray.shape[0] * gray.shape[1])
-            results = [{"area_mm2": r.area_mm2, "d_mm": r.equivalent_d_mm, "feret_long": r.feret_long_mm, "feret_short": r.feret_short_mm, "circularity": r.circularity, "size": r.size_category} for r in grain_results]
-            images = {"result": bgr}
+            results, summary, images = GrainAnalyzer.analyze_direct(bgr,
+                scale_mm_per_px=params.get("scale", 0.05),
+                min_area_px=params.get("min_area", 50),
+                threshold_block=params.get("block_size", 21))
         else:
             return jsonify({"error": "Unknown type"}), 400
 
