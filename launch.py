@@ -14,7 +14,7 @@ def main():
     time.sleep(2)
     from app import app
     port = 5000
-    threading.Thread(target=lambda: app.run(port=port, debug=False, use_reloader=False), daemon=True).start()
+    threading.Thread(target=lambda: app.run(port=port, debug=False, use_reloader=False), daemon=False).start()
     time.sleep(2)
     print(f"系统已启动: http://127.0.0.1:{port}")
     webview.create_window("岩心孔洞裂缝分析系统", f"http://127.0.0.1:{port}",
