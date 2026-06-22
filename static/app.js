@@ -262,6 +262,15 @@ document.getElementById('btnReport').onclick = () => {
     }
   }
 
+  // Embed result images
+  if (d.images && d.images.result) {
+    md += '## 附图：结果标记图\n\n';
+    md += '!['+'结果标记图]('+d.images.result+')\n\n';
+  }
+  if (d.images && d.images.binary) {
+    md += '## 附图：二值化图\n\n';
+    md += '!['+'二值化图]('+d.images.binary+')\n\n';
+  }
   md += '---\n*岩心孔洞裂缝分析系统 v1.0*\n';
   fetch('/api/report/save', {method:'POST', body: md}).then(r => r.json()).then(d => {
     if (d.status === 'ok') alert('报告已保存到: ' + d.path);
