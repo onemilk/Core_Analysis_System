@@ -180,101 +180,10 @@ function exitRoiMode() {
 document.getElementById('btnKnowledge').onclick = () => window.open('/knowledge', '_blank');
 document.getElementById('btnReport').onclick = () => {
   if (!resultData) return alert('请先完成分析');
-  const d = resultData, s = d.summary || {};
-  const now = new Date().toLocaleString();
-  let md = '';
-
-  // ── Hole Report (Markdown) ──
-  if (currentType === 'hole') {
-    md += '# 碳酸盐岩岩心孔洞分析报告\n\n';
-    md += '> 生成时间: ' + now + '\n\n';
-    md += '## 一、孔洞检测统计\n\n';
-    md += '| 指标 | 值 | 单位 |\n|------|-----|------|\n';
-    md += '| 孔洞总数 | ' + (s.hole_count||0) + ' | 个 |\n';
-    md += '| 孔洞总面积 | ' + fmt(s.total_area) + ' | mm² |\n';
-    md += '| 平均面积 | ' + fmt(s.avg_area) + ' | mm² |\n';
-    md += '| 面孔率 | ' + fmt(s.porosity_percent) + ' | % |\n';
-    md += '| 平均等效直径 | ' + fmt(s.avg_diameter_mm) + ' | mm |\n';
-    md += '| 最大等效直径 | ' + fmt(s.max_diameter_mm) + ' | mm |\n';
-    md += '| 最小等效直径 | ' + fmt(s.min_diameter_mm) + ' | mm |\n\n';
-    if (s.size_distribution) {
-      md += '## 二、孔洞大小分布\n\n';
-      md += '| 分类 | 孔径范围 | 数量 | 占比 |\n|------|----------|------|------|\n';
-      const cats = ['大洞(>10mm)','中洞(5-10mm)','小洞(1-5mm)','针孔(<1mm)'];
-      const ranges = ['>10mm','5-10mm','1-4.9mm','<1mm'];
-      const total = s.hole_count || 1;
-      cats.forEach((c,i) => { md += '| '+c.replace(/\(.*\)/,'')+' | '+ranges[i]+' | '+(s.size_distribution[c]||0)+' | '+((s.size_distribution[c]||0)/total*100).toFixed(1)+'% |\n'; });
-      md += '\n';
-    }
-    if (d.results && d.results.length > 0) {
-      md += '## 三、孔洞明细\n\n';
-      md += '| 序号 | 面积(mm²) | 等效直径(mm) | 圆形度 |\n|------|-----------|-------------|--------|\n';
-      d.results.forEach((r,i) => { md += '| '+(i+1)+' | '+r.area_mm2.toFixed(4)+' | '+r.diameter_mm.toFixed(4)+' | '+r.circularity.toFixed(4)+' |\n'; });
-      md += '\n';
-    }
-  }
-  // ── Fracture Report (Markdown) ──
-  else if (currentType === 'fracture') {
-    md += '# 碳酸盐岩岩心裂缝分析报告\n\n';
-    md += '> 生成时间: ' + now + '\n\n';
-    md += '## 一、裂缝检测统计\n\n';
-    md += '| 指标 | 值 | 单位 |\n|------|-----|------|\n';
-    md += '| 裂缝总条数 | ' + (s.crack_count||0) + ' | 条 |\n';
-    md += '| 裂缝总面积 | ' + fmt(s.total_area) + ' | px² |\n';
-    md += '| 平均宽度 | ' + fmt(s.avg_width) + ' | px |\n';
-    md += '| 最大宽度 | ' + fmt(s.max_width) + ' | px |\n';
-    md += '| 平均长度 | ' + fmt(s.avg_length) + ' | px |\n';
-    md += '| 最大长度 | ' + fmt(s.max_length) + ' | px |\n\n';
-    if (d.results && d.results.length > 0) {
-      md += '## 二、裂缝明细\n\n';
-      md += '| 序号 | 长度(px) | 宽度(px) | 面积(px²) | 实体度 |\n|------|----------|----------|-----------|--------|\n';
-      d.results.forEach((r,i) => { md += '| '+(i+1)+' | '+r.length_px.toFixed(2)+' | '+r.width_px.toFixed(2)+' | '+r.area_px.toFixed(2)+' | '+r.solidity.toFixed(4)+' |\n'; });
-      md += '\n';
-    }
-  }
-  // ── Grain Report (Markdown) ──
-  else if (currentType === 'grain') {
-    md += '# 砾岩岩心粒度分析报告\n\n';
-    md += '> 生成时间: ' + now + '\n\n';
-    md += '## 一、粒度检测统计\n\n';
-    md += '| 指标 | 值 | 单位 |\n|------|-----|------|\n';
-    md += '| 颗粒总数 | ' + (s.total_count||0) + ' | 个 |\n';
-    md += '| 平均粒径 | ' + fmt(s.avg_diameter_mm) + ' | mm |\n';
-    md += '| 中值粒径(D50) | ' + fmt(s.d50_mm) + ' | mm |\n';
-    md += '| D10 | ' + fmt(s.d10_mm) + ' | mm |\n';
-    md += '| D90 | ' + fmt(s.d90_mm) + ' | mm |\n';
-    md += '| 标准偏差 | ' + fmt(s.std_dev_mm) + ' | mm |\n';
-    md += '| 最大粒径 | ' + fmt(s.max_diameter_mm) + ' | mm |\n';
-    md += '| 最小粒径 | ' + fmt(s.min_diameter_mm) + ' | mm |\n\n';
-    if (s.size_distribution) {
-      md += '## 二、粒度分布 (Udden-Wentworth)\n\n';
-      md += '| 粒级 | 粒径范围 | 数量 | 占比 |\n|------|----------|------|------|\n';
-      const cats = ['砾','砂','粉砂','泥'], ranges = ['>2mm','0.0625-2mm','0.0039-0.0625mm','<0.0039mm'];
-      const total = s.total_count || 1;
-      cats.forEach((c,i) => { md += '| '+c+' | '+ranges[i]+' | '+(s.size_distribution[c]||0)+' | '+((s.size_distribution[c]||0)/total*100).toFixed(1)+'% |\n'; });
-      md += '\n';
-    }
-    if (d.results && d.results.length > 0) {
-      md += '## 三、颗粒明细\n\n';
-      md += '| 序号 | 直径(mm) | Feret长轴(mm) | Feret短轴(mm) | 圆度 | 粒级 |\n|------|----------|---------------|---------------|------|------|\n';
-      d.results.forEach((r,i) => { md += '| '+(i+1)+' | '+r.d_mm.toFixed(4)+' | '+r.feret_long.toFixed(4)+' | '+r.feret_short.toFixed(4)+' | '+r.circularity.toFixed(4)+' | '+r.size+' |\n'; });
-      md += '\n';
-    }
-  }
-
-  // Embed result images
-  if (d.images && d.images.result) {
-    md += '## 附图：结果标记图\n\n';
-    md += '!['+'结果标记图]('+d.images.result+')\n\n';
-  }
-  if (d.images && d.images.binary) {
-    md += '## 附图：二值化图\n\n';
-    md += '!['+'二值化图]('+d.images.binary+')\n\n';
-  }
-  md += '---\n*岩心孔洞裂缝分析系统 v1.0*\n';
-  fetch('/api/report/save', {method:'POST', body: md}).then(r => r.json()).then(d => {
+  const reportData = {type: currentType, summary: resultData.summary || {}, results: resultData.results || []};
+  fetch('/api/report/generate', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(reportData)}).then(r => r.json()).then(d => {
     if (d.status === 'ok') alert('报告已保存到: ' + d.path);
-    else alert('保存失败');
+    else alert('生成失败: ' + (d.error || ''));
   });
 };
 function fmt(v) { return v != null ? (typeof v === 'number' ? v.toFixed(2) : v) : '—'; }

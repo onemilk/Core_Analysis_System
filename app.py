@@ -99,24 +99,44 @@ def analyze():
 def knowledge():
     return jsonify(load_knowledge())
 
-@app.route("/api/report/save", methods=["POST"])
-def save_report_md():
-    """Save Markdown report to report/ directory."""
-    import os
-    md_content = request.data.decode('utf-8')
-    # Save next to exe (or source) — use sys.executable for frozen, __file__ for dev
-    import sys
+@app.route("/api/report/generate", methods=["POST"])
+def generate_report():
+    """Generate professional HTML report using Jinja2 + matplotlib, save to report/."""
+    import os, sys
+    data = request.json
+    analysis_type = data.get("type", "hole")
+    summary = data.get("summary", {})
+    results = data.get("results", [])
+    info = {"image_id":"","well":"","depth":"","layer":"","lithology":"","scale":"","date":"","analyst":""}
+    from datetime import datetime
+    info["date"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    if analysis_type == "hole":
+        fill_stats = [{"status":"未充填","count":summary.get("hole_count",0),"area":summary.get("total_area",0),"percent":100}]
+        effect = {"valid":summary.get("hole_count",0),"semi_valid":0,"invalid":0}
+        html = ReportGenerator.generate_hole_report(summary, fill_stats, effect, info)
+    elif analysis_type == "fracture":
+        fractures = [{"length_mm":r.get("length_px",0),"width_mm":r.get("width_px",0),"area_mm2":r.get("area_px",0),"fracture_type":"构造缝","fill_status":"张开缝","effectiveness":"有效"} for r in results]
+        type_stats = [{"type":"构造缝","count":len(results),"total_length":sum(r.get("length_px",0) for r in results)}]
+        html = ReportGenerator.generate_fracture_report(summary, fractures, type_stats, info)
+    else:
+        feret_data = [(r.get("feret_long",0), r.get("feret_short",0)) for r in results]
+        summary["feret_data"] = feret_data
+        html = ReportGenerator.generate_grain_report(summary, info)
+
     if getattr(sys, 'frozen', False):
         base_dir = os.path.dirname(sys.executable)
     else:
         base_dir = os.path.dirname(os.path.abspath(__file__))
     report_dir = os.path.join(base_dir, "report")
     os.makedirs(report_dir, exist_ok=True)
-    from datetime import datetime
-    filename = f"岩心分析报告_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+    filename = f"岩心分析报告_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
     filepath = os.path.join(report_dir, filename)
     with open(filepath, 'w', encoding='utf-8') as f:
-        f.write(md_content)
+        f.write(html)
+    # Open in browser
+    import webbrowser
+    webbrowser.open('file:///' + filepath.replace('\\', '/'))
     return jsonify({"status": "ok", "path": filepath, "filename": filename})
 
 @app.route("/report")
