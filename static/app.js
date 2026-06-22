@@ -173,10 +173,6 @@ document.getElementById('btnReport').onclick = () => {
   if (!resultData) return alert('请先完成分析');
   const d = resultData;
   const s = d.summary || {};
-  let html = '<!DOCTYPE html><html lang=zh-CN><head><meta charset=UTF-8><title>分析报告</title>';
-  html += '<style>body{font-family:"Microsoft YaHei",sans-serif;padding:20px} h1{text-align:center}';
-  html += 'table{border-collapse:collapse;width:100%;margin:8px 0} th,td{border:1px solid #666;padding:6px} th{background:#f0f0f0}</style></head><body>';
-  html += '<h1>岩心分析报告</h1><h2>统计摘要</h2><table>';
   const labels = {
     hole_count:'孔洞数量(个)', total_area:'总面积(mm²)', avg_area:'平均面积(mm²)',
     avg_circularity:'平均圆形度', avg_diameter_mm:'平均直径(mm)', max_diameter_mm:'最大直径(mm)',
@@ -184,16 +180,53 @@ document.getElementById('btnReport').onclick = () => {
     crack_count:'裂缝数量(条)', avg_width:'平均宽度(px)', max_width:'最大宽度(px)',
     max_length:'最大长度(px)', avg_length:'平均长度(px)'
   };
+  const typeNames = {hole:'孔洞分析', fracture:'裂缝分析', grain:'粒度分析'};
+  const now = new Date().toLocaleString();
+  let html = '<!DOCTYPE html><html lang=zh-CN><head><meta charset=UTF-8><title>岩心分析报告</title>';
+  html += '<style>body{font-family:"Microsoft YaHei",sans-serif;padding:30px;color:#333;max-width:900px;margin:0 auto}';
+  html += 'h1{text-align:center;font-size:20px;border-bottom:2px solid #2c3e50;padding-bottom:12px}';
+  html += 'h2{font-size:16px;border-bottom:1px solid #ccc;margin-top:28px;padding-bottom:6px}';
+  html += 'table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}';
+  html += 'th,td{border:1px solid #999;padding:6px 10px;text-align:left}';
+  html += 'th{background:#2c3e50;color:#fff}';
+  html += 'tr:nth-child(even){background:#f5f5f5}';
+  html += '.info td{border:none;padding:4px 10px}';
+  html += '.chart{text-align:center;margin:20px 0}';
+  html += '.chart img{max-width:100%;border:1px solid #ddd}';
+  html += '.footer{text-align:center;color:#999;margin-top:30px;font-size:12px}</style></head><body>';
+
+  html += '<h1>碳酸盐岩岩心'+ (typeNames[currentType]||'分析') +'报告</h1>';
+  html += '<h2>基础信息</h2><table class=info>';
+  html += '<tr><td><b>分析类型</b></td><td>'+ (typeNames[currentType]||currentType) +'</td><td><b>生成时间</b></td><td>'+now+'</td></tr></table>';
+
+  html += '<h2>一、检测统计</h2><table>';
   for (const [k,v] of Object.entries(s)) {
-    if (k === 'diameters' || k === 'size_distribution') continue;
+    if (k==='diameters'||k==='size_distribution') continue;
     const label = labels[k] || k;
     html += '<tr><td><b>'+label+'</b></td><td>'+(typeof v==='number'?v.toFixed(2):JSON.stringify(v))+'</td></tr>';
   }
   html += '</table>';
-  if (d.images && d.images.result) {
-    html += '<h2>结果图</h2><img src="'+d.images.result+'" style="max-width:100%">';
+
+  if (s.size_distribution) {
+    html += '<h2>二、大小分布</h2><table>';
+    const distLabels = {'大洞(>10mm)':'大洞(>10mm)','中洞(5-10mm)':'中洞(5-10mm)','小洞(1-5mm)':'小洞(1-4.9mm)','针孔(<1mm)':'针孔(<1mm)',
+      '砾':'砾(>2mm)','砂':'砂(0.0625-2mm)','粉砂':'粉砂(0.0039-0.0625mm)','泥':'泥(<0.0039mm)'};
+    for (const [k,v] of Object.entries(s.size_distribution)) {
+      html += '<tr><td>'+ (distLabels[k]||k) +'</td><td>'+v+' 个</td></tr>';
+    }
+    html += '</table>';
   }
-  html += '<p style="color:#999;margin-top:20px">生成时间: '+new Date().toLocaleString()+'</p></body></html>';
+
+  html += '<h2>三、附图</h2>';
+  if (d.images && d.images.result) {
+    html += '<div class=chart><img src="'+d.images.result+'"><p style=color:#888;font-size:12px>结果标记图</p></div>';
+  }
+  if (d.images && d.images.binary) {
+    html += '<div class=chart><img src="'+d.images.binary+'"><p style=color:#888;font-size:12px>二值化图</p></div>';
+  }
+
+  html += '<div class=footer>岩心孔洞裂缝分析系统 v1.0 &copy; '+new Date().getFullYear()+'</div>';
+  html += '</body></html>';
   const w = window.open('', '_blank');
   w.document.write(html);
   w.document.close();
