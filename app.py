@@ -104,7 +104,13 @@ def save_report_md():
     """Save Markdown report to report/ directory."""
     import os
     md_content = request.data.decode('utf-8')
-    report_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "report")
+    # Save next to exe (or source) — use sys.executable for frozen, __file__ for dev
+    import sys
+    if getattr(sys, 'frozen', False):
+        base_dir = os.path.dirname(sys.executable)
+    else:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+    report_dir = os.path.join(base_dir, "report")
     os.makedirs(report_dir, exist_ok=True)
     from datetime import datetime
     filename = f"岩心分析报告_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
