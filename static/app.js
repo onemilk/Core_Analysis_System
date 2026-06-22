@@ -263,10 +263,9 @@ document.getElementById('btnReport').onclick = () => {
   }
 
   md += '---\n*岩心孔洞裂缝分析系统 v1.0*\n';
-  const blob = new Blob([md], {type:'text/markdown;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = '岩心分析报告_' + new Date().toISOString().slice(0,10) + '.md';
-  a.click();
+  fetch('/api/report/save', {method:'POST', body: md}).then(r => r.json()).then(d => {
+    if (d.status === 'ok') alert('报告已保存到: ' + d.path);
+    else alert('保存失败');
+  });
 };
 function fmt(v) { return v != null ? (typeof v === 'number' ? v.toFixed(2) : v) : '—'; }

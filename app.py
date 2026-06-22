@@ -116,6 +116,20 @@ def view_report(rid):
     html = _report_store.get(rid, "<h1>报告已过期</h1>")
     return html
 
+@app.route("/api/report/save", methods=["POST"])
+def save_report_md():
+    """Save Markdown report to report/ directory."""
+    import os
+    md_content = request.data.decode('utf-8')
+    report_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "report")
+    os.makedirs(report_dir, exist_ok=True)
+    from datetime import datetime
+    filename = f"岩心分析报告_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+    filepath = os.path.join(report_dir, filename)
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write(md_content)
+    return jsonify({"status": "ok", "path": filepath, "filename": filename})
+
 @app.route("/report")
 def report_page():
     return render_template("report.html",
