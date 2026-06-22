@@ -104,7 +104,11 @@ def knowledge():
 
 @app.route("/report")
 def report_page():
-    return render_template("report.html")
+    return render_template("report.html",
+        info={"image_id":"","well":"","depth":"","layer":"","lithology":"","scale":"","date":"","analyst":""},
+        summary={"total_count":0,"total_area_mm2":0,"avg_area_mm2":0,"porosity_percent":0,"avg_d_mm":0,"max_d_mm":0,"min_d_mm":0},
+        fill_stats=[], effect={"valid":0,"semi_valid":0,"invalid":0},
+        size_dist=[], charts={})
 
 @app.route("/knowledge")
 def knowledge_page():
