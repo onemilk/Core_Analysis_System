@@ -177,9 +177,17 @@ document.getElementById('btnReport').onclick = () => {
   html += '<style>body{font-family:"Microsoft YaHei",sans-serif;padding:20px} h1{text-align:center}';
   html += 'table{border-collapse:collapse;width:100%;margin:8px 0} th,td{border:1px solid #666;padding:6px} th{background:#f0f0f0}</style></head><body>';
   html += '<h1>岩心分析报告</h1><h2>统计摘要</h2><table>';
+  const labels = {
+    hole_count:'孔洞数量(个)', total_area:'总面积(mm²)', avg_area:'平均面积(mm²)',
+    avg_circularity:'平均圆形度', avg_diameter_mm:'平均直径(mm)', max_diameter_mm:'最大直径(mm)',
+    min_diameter_mm:'最小直径(mm)', porosity_percent:'面孔率(%)',
+    crack_count:'裂缝数量(条)', avg_width:'平均宽度(px)', max_width:'最大宽度(px)',
+    max_length:'最大长度(px)', avg_length:'平均长度(px)'
+  };
   for (const [k,v] of Object.entries(s)) {
     if (k === 'diameters' || k === 'size_distribution') continue;
-    html += '<tr><td><b>'+k+'</b></td><td>'+(typeof v==='number'?v.toFixed(2):JSON.stringify(v))+'</td></tr>';
+    const label = labels[k] || k;
+    html += '<tr><td><b>'+label+'</b></td><td>'+(typeof v==='number'?v.toFixed(2):JSON.stringify(v))+'</td></tr>';
   }
   html += '</table>';
   if (d.images && d.images.result) {
