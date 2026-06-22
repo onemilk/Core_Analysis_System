@@ -25,11 +25,10 @@ class TestGrainAnalyzer:
         results, summary = GrainAnalyzer.analyze([region], scale, image_area_px)
         assert len(results) == 1
         r = results[0]
-        assert r.area_mm2 > 0
-        assert r.equivalent_d_mm > 0
-        assert r.perimeter_mm > 0
-        assert r.feret_long_mm > 0
-        assert 0 < r.circularity <= 1.0
+        assert r["area_mm2"] > 0
+        assert r["equivalent_d_mm"] > 0
+        assert r["feret_long_mm"] > 0
+        assert 0 < r["circularity"] <= 1.0
 
     def test_feret_dimensions(self):
         region = _make_circular_region()
@@ -37,7 +36,7 @@ class TestGrainAnalyzer:
         image_area_px = 10000
         results, _ = GrainAnalyzer.analyze([region], scale, image_area_px)
         r = results[0]
-        ratio = r.feret_long_mm / max(r.feret_short_mm, 0.001)
+        ratio = r["feret_long_mm"] / max(r["feret_short_mm"], 0.001)
         assert ratio < 1.5
 
     def test_size_classification(self):
@@ -45,7 +44,7 @@ class TestGrainAnalyzer:
         scale = 1.0
         image_area_px = 10000
         results, _ = GrainAnalyzer.analyze([region], scale, image_area_px)
-        assert results[0].size_category == "砾"
+        assert results[0]["size_category"] == "砾"
 
     def test_empty_regions(self):
         results, summary = GrainAnalyzer.analyze([], 0.05, 10000)

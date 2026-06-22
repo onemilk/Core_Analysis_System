@@ -275,7 +275,7 @@ document.getElementById('btnReport').onclick = () => {
     html += '<h2>粒径分布直方图</h2><div class=chart><canvas id=rptChart width=800 height=400></canvas></div>';
   }
   html += '<div class=footer>岩心孔洞裂缝分析系统 v1.0</div>';
-  html += '<script src=\"https://cdn.jsdelivr.net/npm/chart.js@4\"></script>';
+  html += '<script src=\"/static/chart.min.js\"></script>';
   html += '<script>var _diameters='+JSON.stringify(s.diameters||[])+';';
   html += 'var _labels=_diameters.map((_,i)=>\"#\"+(i+1));';
   html += 'new Chart(document.getElementById(\"rptChart\"),{type:\"bar\",data:{labels:_labels,datasets:[{label:\"直径(mm)\",data:_diameters}]},options:{responsive:true}});';
