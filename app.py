@@ -112,17 +112,39 @@ def generate_report():
     info["date"] = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     if analysis_type == "hole":
-        fill_stats = [{"status":"未充填","count":summary.get("hole_count",0),"area":summary.get("total_area",0),"percent":100}]
-        effect = {"valid":summary.get("hole_count",0),"semi_valid":0,"invalid":0}
-        html = ReportGenerator.generate_hole_report(summary, fill_stats, effect, info)
+        # Map new keys to old report format
+        s = {"total_count": summary.get("hole_count",0),
+             "total_area_mm2": summary.get("total_area",0),
+             "avg_area_mm2": summary.get("avg_area",0),
+             "porosity_percent": summary.get("porosity_percent",0),
+             "avg_equivalent_d_mm": summary.get("avg_diameter_mm",0),
+             "max_equivalent_d_mm": summary.get("max_diameter_mm",0),
+             "min_equivalent_d_mm": summary.get("min_diameter_mm",0),
+             "size_distribution": summary.get("size_distribution",{}),
+             "diameters": summary.get("diameters",[])}
+        fill_stats = [{"status":"未充填","count":s["total_count"],"area":s["total_area_mm2"],"percent":100}]
+        effect = {"valid":s["total_count"],"semi_valid":0,"invalid":0}
+        html = ReportGenerator.generate_hole_report(s, fill_stats, effect, info)
     elif analysis_type == "fracture":
+        s = {"total_count": summary.get("crack_count",0),
+             "total_area_mm2": summary.get("total_area",0),
+             "porosity_percent": 0,
+             "total_length_mm": summary.get("avg_length",0) * summary.get("crack_count",1),
+             "surface_density": 0, "linear_density": 0, "avg_spacing_mm": 0}
         fractures = [{"length_mm":r.get("length_px",0),"width_mm":r.get("width_px",0),"area_mm2":r.get("area_px",0),"fracture_type":"构造缝","fill_status":"张开缝","effectiveness":"有效"} for r in results]
         type_stats = [{"type":"构造缝","count":len(results),"total_length":sum(r.get("length_px",0) for r in results)}]
-        html = ReportGenerator.generate_fracture_report(summary, fractures, type_stats, info)
+        html = ReportGenerator.generate_fracture_report(s, fractures, type_stats, info)
     else:
-        feret_data = [(r.get("feret_long",0), r.get("feret_short",0)) for r in results]
-        summary["feret_data"] = feret_data
-        html = ReportGenerator.generate_grain_report(summary, info)
+        s = {"total_count": summary.get("total_count",0),
+             "avg_diameter_mm": summary.get("avg_diameter_mm",0),
+             "md_diameter_mm": summary.get("d50_mm",0),
+             "std_dev_mm": summary.get("std_dev_mm",0),
+             "max_diameter_mm": summary.get("max_diameter_mm",0),
+             "min_diameter_mm": summary.get("min_diameter_mm",0),
+             "size_distribution": summary.get("size_distribution",{}),
+             "diameters": summary.get("diameters",[]),
+             "feret_data": [(r.get("feret_long",0), r.get("feret_short",0)) for r in results]}
+        html = ReportGenerator.generate_grain_report(s, info)
 
     if getattr(sys, 'frozen', False):
         base_dir = os.path.dirname(sys.executable)

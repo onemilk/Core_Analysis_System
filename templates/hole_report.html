@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>岩心孔洞分析报告</title>
+<style>
+  body { font-family: "Microsoft YaHei", sans-serif; padding: 20px; color: #333; }
+  h1 { text-align: center; font-size: 18px; }
+  h2 { font-size: 15px; border-bottom: 1px solid #333; margin-top: 24px; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 13px; }
+  th, td { border: 1px solid #666; padding: 4px 8px; text-align: left; }
+  th { background: #f0f0f0; }
+  .info td { border: none; }
+  .chart { text-align: center; margin: 16px 0; }
+  .chart img { max-width: 100%; }
+</style>
+</head>
+<body>
+<h1>碳酸盐岩岩心孔洞分析报告</h1>
+
+<h2>基础信息</h2>
+<table class="info">
+  <tr><td><b>图像编号:</b> {{ info.image_id }}</td><td><b>井号:</b> {{ info.well }}</td></tr>
+  <tr><td><b>深度:</b> {{ info.depth }} m</td><td><b>层位:</b> {{ info.layer }}</td></tr>
+  <tr><td><b>岩性:</b> {{ info.lithology }}</td><td><b>标尺:</b> {{ info.scale }} mm/px</td></tr>
+  <tr><td><b>分析日期:</b> {{ info.date }}</td><td><b>分析人:</b> {{ info.analyst }}</td></tr>
+</table>
+
+<h2>一、孔洞检测统计</h2>
+<table>
+  <tr><th>指标</th><th>值</th><th>单位</th></tr>
+  <tr><td>孔洞总数</td><td>{{ summary.total_count }}</td><td>个</td></tr>
+  <tr><td>孔洞总面积</td><td>{{ summary.total_area_mm2 }}</td><td>mm²</td></tr>
+  <tr><td>平均面积</td><td>{{ summary.avg_area_mm2 }}</td><td>mm²</td></tr>
+  <tr><td>面孔率</td><td>{{ summary.porosity_percent }}%</td><td>—</td></tr>
+  <tr><td>最大等效直径</td><td>{{ summary.max_d_mm }}</td><td>mm</td></tr>
+  <tr><td>最小等效直径</td><td>{{ summary.min_d_mm }}</td><td>mm</td></tr>
+  <tr><td>平均等效直径</td><td>{{ summary.avg_d_mm }}</td><td>mm</td></tr>
+</table>
+
+<h2>二、充填特征</h2>
+<table>
+  <tr><th>充填状态</th><th>数量</th><th>面积(mm²)</th><th>占比</th></tr>
+  {% for item in fill_stats %}
+  <tr><td>{{ item.status }}</td><td>{{ item.count }}</td><td>{{ item.area }}</td><td>{{ item.percent }}%</td></tr>
+  {% endfor %}
+</table>
+
+<h2>三、有效性评价</h2>
+<p>有效 {{ effect.valid }} 个 | 较有效 {{ effect.semi_valid }} 个 | 无效 {{ effect.invalid }} 个</p>
+
+<h2>四、孔洞大小分布</h2>
+<table>
+  <tr><th>分类</th><th>孔径范围</th><th>数量</th><th>占比</th></tr>
+  {% for item in size_dist %}
+  <tr><td>{{ item.category }}</td><td>{{ item.range }}</td><td>{{ item.count }}</td><td>{{ item.percent }}%</td></tr>
+  {% endfor %}
+</table>
+
+<h2>五、附图</h2>
+{% if charts.histogram %}
+<div class="chart"><img src="data:image/png;base64,{{ charts.histogram }}" alt="频率直方图"></div>
+{% endif %}
+{% if charts.cumulative %}
+<div class="chart"><img src="data:image/png;base64,{{ charts.cumulative }}" alt="累计频率曲线"></div>
+{% endif %}
+{% if charts.normal_cdf %}
+<div class="chart"><img src="data:image/png;base64,{{ charts.normal_cdf }}" alt="正态累计曲线"></div>
+{% endif %}
+</body>
+</html>

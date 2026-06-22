@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>岩心裂缝分析报告</title>
+<style>
+  body { font-family: "Microsoft YaHei", sans-serif; padding: 20px; color: #333; }
+  h1 { text-align: center; font-size: 18px; }
+  h2 { font-size: 15px; border-bottom: 1px solid #333; margin-top: 24px; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 13px; }
+  th, td { border: 1px solid #666; padding: 4px 8px; text-align: left; }
+  th { background: #f0f0f0; }
+  .info td { border: none; }
+</style>
+</head>
+<body>
+<h1>碳酸盐岩岩心裂缝分析报告</h1>
+
+<h2>基础信息</h2>
+<table class="info">
+  <tr><td><b>图像编号:</b> {{ info.image_id }}</td><td><b>井号:</b> {{ info.well }}</td></tr>
+  <tr><td><b>深度:</b> {{ info.depth }} m</td><td><b>层位:</b> {{ info.layer }}</td></tr>
+  <tr><td><b>岩性:</b> {{ info.lithology }}</td><td><b>标尺:</b> {{ info.scale }} mm/px</td></tr>
+  <tr><td><b>分析日期:</b> {{ info.date }}</td><td><b>分析人:</b> {{ info.analyst }}</td></tr>
+</table>
+
+<h2>一、裂缝检测统计</h2>
+<table>
+  <tr><th>指标</th><th>值</th><th>单位</th></tr>
+  <tr><td>裂缝总条数</td><td>{{ summary.total_count }}</td><td>条</td></tr>
+  <tr><td>裂缝总面积</td><td>{{ summary.total_area_mm2 }}</td><td>mm²</td></tr>
+  <tr><td>面孔隙度</td><td>{{ summary.porosity_percent }}%</td><td>—</td></tr>
+  <tr><td>累计长度</td><td>{{ summary.total_length_mm }}</td><td>mm</td></tr>
+  <tr><td>面密度</td><td>{{ summary.surface_density }}</td><td>m/m²</td></tr>
+  <tr><td>线密度</td><td>{{ summary.linear_density }}</td><td>条/m</td></tr>
+  <tr><td>平均间距</td><td>{{ summary.avg_spacing_mm }}</td><td>mm</td></tr>
+</table>
+
+<h2>二、裂缝明细</h2>
+<table>
+  <tr><th>序号</th><th>长度(mm)</th><th>宽度(mm)</th><th>面积(mm²)</th><th>类型</th><th>充填状态</th><th>有效性</th></tr>
+  {% for f in fractures %}
+  <tr>
+    <td>{{ loop.index }}</td><td>{{ f.length_mm }}</td><td>{{ f.width_mm }}</td>
+    <td>{{ f.area_mm2 }}</td><td>{{ f.fracture_type }}</td>
+    <td>{{ f.fill_status }}</td><td>{{ f.effectiveness }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>三、裂缝成因分类</h2>
+<table>
+  <tr><th>裂缝类型</th><th>条数</th><th>总长度(mm)</th></tr>
+  {% for item in type_stats %}
+  <tr><td>{{ item.type }}</td><td>{{ item.count }}</td><td>{{ item.total_length }}</td></tr>
+  {% endfor %}
+</table>
+</body>
+</html>
