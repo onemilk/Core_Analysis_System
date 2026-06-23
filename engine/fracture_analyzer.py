@@ -47,8 +47,9 @@ class FractureAnalyzer:
             hull = cv2.convexHull(cnt)
             hull_area = cv2.contourArea(hull)
             solidity = area / hull_area if hull_area > 0 else 0
-            # 实体度过滤：裂缝形状不规则，但真实岩心裂缝实体度可能较高，放宽到 0.85
-            if solidity >= 0.85:
+            # 明亮图片不做过多的形状限制（与孔洞分析一致），暗色图保持实体度过滤
+            max_solidity = 0.95 if brightness > 140 else 0.85
+            if solidity >= max_solidity:
                 continue
 
             length = cv2.arcLength(cnt, True)
