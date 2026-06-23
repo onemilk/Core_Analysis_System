@@ -11,7 +11,7 @@ def _make_crack_image():
 class TestFractureAnalyzer:
     def test_analyze_finds_cracks(self):
         img = _make_crack_image()
-        results, summary, images = FractureAnalyzer.analyze(img, threshold=60, min_area=50)
+        results, summary, images = FractureAnalyzer.analyze(img, threshold=60, min_area=50, min_elongation=1.0)
         assert summary["crack_count"] > 0
         assert "avg_width" in summary
         assert images["result"] is not None
