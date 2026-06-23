@@ -4,7 +4,7 @@ from scipy import ndimage
 
 class FractureAnalyzer:
     @staticmethod
-    def analyze(image, threshold=80, min_area=100, max_area=float('inf'), scale_mm_per_px=0.05):
+    def analyze(image, threshold=80, min_area=30, max_area=float('inf'), scale_mm_per_px=0.05):
         if image is None:
             return [], {"error": "Image is None"}, {}
 
@@ -45,7 +45,8 @@ class FractureAnalyzer:
             hull = cv2.convexHull(cnt)
             hull_area = cv2.contourArea(hull)
             solidity = area / hull_area if hull_area > 0 else 0
-            if solidity >= 0.7:
+            # 实体度过滤：裂缝形状不规则，但真实岩心裂缝实体度可能较高，放宽到 0.85
+            if solidity >= 0.85:
                 continue
 
             length = cv2.arcLength(cnt, True)
