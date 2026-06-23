@@ -11,18 +11,18 @@ def _make_crack_image():
 class TestFractureAnalyzer:
     def test_analyze_finds_cracks(self):
         img = _make_crack_image()
-        results, summary, images = FractureAnalyzer.analyze(img, threshold=60, min_area=50, min_elongation=1.0)
+        results, summary, images = FractureAnalyzer.analyze(img, threshold=60, min_area=50, min_elongation=1.0, use_dl=False)
         assert summary["crack_count"] > 0
         assert "avg_width" in summary
         assert images["result"] is not None
 
     def test_return_format(self):
         img = _make_crack_image()
-        _, summary, _ = FractureAnalyzer.analyze(img)
+        _, summary, _ = FractureAnalyzer.analyze(img, use_dl=False)
         required = ["crack_count", "total_area", "avg_width", "max_length"]
         for k in required:
             assert k in summary, f"Missing: {k}"
 
     def test_empty_image(self):
-        _, summary, _ = FractureAnalyzer.analyze(None)
+        _, summary, _ = FractureAnalyzer.analyze(None, use_dl=False)
         assert "error" in summary

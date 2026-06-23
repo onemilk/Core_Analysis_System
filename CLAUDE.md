@@ -22,7 +22,7 @@ D:/python/python312/python.exe -m pytest tests/ -q
 D:/python/python312/python.exe launch.py
 
 # 打包成 exe（结束时必执行）
-D:/python/python312/python.exe -m PyInstaller --name="CoreAnalysisSystem" --onefile --windowed --add-data="templates;templates" --add-data="static;static" --add-data="knowledge.json;." --hidden-import=scipy.ndimage --hidden-import=skimage.feature --hidden-import=skimage.segmentation --hidden-import=webview launch.py
+D:/python/python312/python.exe -m PyInstaller --name="CoreAnalysisSystem" --onefile --windowed --add-data="templates;templates" --add-data="static;static" --add-data="knowledge.json;." --add-data="best_model.pth;." --add-data="ohters;ohters" --hidden-import=scipy.ndimage --hidden-import=skimage.feature --hidden-import=skimage.segmentation --hidden-import=webview --hidden-import=crackawarenet --hidden-import=unet_model --hidden-import=engine.fracture_dl_model launch.py
 
 # 结束工作流程
 1. D:/python/python312/python.exe -m pytest tests/ -q
@@ -39,9 +39,12 @@ app.py              Flask 路由（/api/analyze, /api/report/generate, /api/know
 launch.py           启动脚本——杀旧进程 → Flask 线程 → pywebview 原生窗口
 engine/             分析引擎（纯 Python，不依赖 Flask）
   hole_analyzer.py     灰度阈值 + Otsu + 轮廓提取
-  fracture_analyzer.py  自适应阈值 + 距离变换 + 实体度过滤
+  fracture_analyzer.py  自适应阈值 + 距离变换 + 狭长度过滤 + 深度学习融合
+  fracture_dl_model.py  CrackAwareNet/Attention U-Net 单例加载器（80MB权重）
   grain_analyzer.py     Otsu + 分水岭 + peak_local_max + D10/D50/D90
   report_generator.py   Jinja2 + matplotlib 生成 HTML 报告
+ohters/             深度学习模型定义（CrackAwareNet + Attention U-Net）
+best_model.pth      预训练权重文件（80MB）
 templates/          Jinja2 模板（index.html, knowledge.html, hole/fracture/grain_report.html）
 static/app.js       前端逻辑——上传、API 调用、Chart.js、ROI 多边形
 report/             报告输出目录

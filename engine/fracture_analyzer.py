@@ -1,10 +1,12 @@
-"""Fracture analyzer — adaptive threshold + distance transform (senior project algorithm)."""
+"""Fracture analyzer — adaptive threshold + distance transform + deep learning fusion."""
 import cv2, numpy as np, math
 from scipy import ndimage
+from engine.fracture_dl_model import FractureDLModel
 
 class FractureAnalyzer:
     @staticmethod
-    def analyze(image, threshold=80, min_area=30, max_area=float('inf'), min_elongation=1.5, scale_mm_per_px=0.05):
+    def analyze(image, threshold=80, min_area=30, max_area=float('inf'),
+                min_elongation=1.5, use_dl=True, scale_mm_per_px=0.05):
         if image is None:
             return [], {"error": "Image is None"}, {}
 
@@ -29,6 +31,15 @@ class FractureAnalyzer:
             _, bh_binary = cv2.threshold(blackhat, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             # 合并黑帽结果与自适应阈值结果，确保裂缝完整提取
             binary = cv2.bitwise_or(binary, bh_binary)
+
+        # 深度学习辅助检测：用预训练模型（CrackAwareNet/Attention U-Net）生成裂缝掩码
+        # 与 CV 二值图融合，弥补传统算法对微细/低对比度裂缝的漏检
+        dl_available = False
+        if use_dl and FractureDLModel.is_available():
+            dl_mask = FractureDLModel.predict(image, threshold=0.3)
+            if dl_mask.any():
+                binary = cv2.bitwise_or(binary, dl_mask)
+                dl_available = True
 
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
         binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel, iterations=1)
@@ -84,6 +95,7 @@ class FractureAnalyzer:
             "max_width": float(round(float(max(widths)), 2)) if widths else 0.0,
             "max_length": float(round(float(max(lengths)), 2)) if lengths else 0.0,
             "avg_length": float(round(float(np.mean(lengths)), 2)) if lengths else 0.0,
+            "dl_available": dl_available,
         }
         # Ensure all results use native Python types
         clean_results = []
