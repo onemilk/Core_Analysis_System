@@ -19,14 +19,23 @@ class FractureAnalyzer:
         # 高斯滤波去噪（保留边缘比双边滤波更好）
         blurred = cv2.GaussianBlur(enhanced, (3, 3), 0)
 
-        # 2. 边缘检测 + 阈值：Canny 提取裂缝边缘，比色彩阈值更准
-        edges = cv2.Canny(blurred, 30, 100)
-        # 亮度补偿阈值（辅助检测）
-        brightness_factor = max(1.0, brightness / 120.0)
-        adjusted_threshold = min(200, int(threshold * brightness_factor))
-        _, thresh = cv2.threshold(blurred, adjusted_threshold, 255, cv2.THRESH_BINARY_INV)
-        # 合并 Canny 边缘和阈值结果
-        binary = cv2.bitwise_or(edges, thresh)
+        # 2. 边缘检测 + 阈值：根据亮度自适应选择策略
+        if brightness > 140:
+            # 明亮图片：Canny 降低阈值 + Otsu 辅助捕捉细裂缝
+            canny_low = max(15, int(30 * 100 / brightness))
+            edges = cv2.Canny(blurred, canny_low, canny_low * 2)
+            _, otsu = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+            _, thresh = cv2.threshold(blurred, threshold, 255, cv2.THRESH_BINARY_INV)
+            binary = cv2.bitwise_or(edges, thresh)
+            binary = cv2.bitwise_or(binary, otsu)  # 明亮图片用 Otsu 补充
+        else:
+            # 暗色图片：Canny 标准阈值 + 自适应阈值 + 全局阈值
+            edges = cv2.Canny(blurred, 30, 100)
+            adaptive = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                             cv2.THRESH_BINARY_INV, 11, 2)
+            _, thresh = cv2.threshold(blurred, threshold, 255, cv2.THRESH_BINARY_INV)
+            binary = cv2.bitwise_or(edges, thresh)
+            binary = cv2.bitwise_or(binary, adaptive)
 
         # 3. 形态学清理
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
