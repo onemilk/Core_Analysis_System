@@ -9,17 +9,19 @@ class FractureAnalyzer:
             return [], {"error": "Image is None"}, {}
 
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        enhanced = clahe.apply(gray)
-        blurred = cv2.bilateralFilter(enhanced, 9, 75, 75)
-        # 计算图像亮度，明亮图片用 Otsu（效果等同孔洞分析的阈值法）
-        brightness = float(np.median(gray))
+        brightness = float(np.median(gray))  # 图像亮度中值
 
         if brightness > 140:
-            # 明亮图片：Otsu 自动阈值（与孔洞分析相同的算法）
+            # 明亮图片：完整复制孔洞分析的预处理管线（CLAHE→Gaussian→Otsu）
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+            enhanced = clahe.apply(gray)
+            blurred = cv2.GaussianBlur(enhanced, (5, 5), 0)
             _, binary = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
         else:
-            # 暗色图片：原算法（自适应 + 全局阈值）
+            # 暗色图片：原裂缝算法（CLAHE→Bilateral→自适应+全局阈值）
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+            enhanced = clahe.apply(gray)
+            blurred = cv2.bilateralFilter(enhanced, 9, 75, 75)
             adaptive = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                              cv2.THRESH_BINARY_INV, 11, 2)
             _, global_thresh = cv2.threshold(blurred, threshold, 255, cv2.THRESH_BINARY_INV)
