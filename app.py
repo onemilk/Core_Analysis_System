@@ -49,13 +49,17 @@ def analyze():
         if bgr is None:
             return jsonify({"error": "Invalid image"}), 400
 
-        # Apply ROI polygon: white-out outside, draw green border
+        # ROI 多边形：框外用图像中值灰度填充（而非纯白），避免影响 Otsu/阈值算法
         roi_polygon = params.pop("roi_polygon", None)
+        roi_pts = None
         if roi_polygon:
-            pts = np.array([[int(p["x"]), int(p["y"])] for p in roi_polygon], dtype=np.int32)
+            roi_pts = np.array([[int(p["x"]), int(p["y"])] for p in roi_polygon], dtype=np.int32)
+            # 用图像灰度中值填充框外，而非纯白——保持阈值算法正常工作
+            gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+            fill_val = int(np.median(gray))
             roi_mask = np.zeros(bgr.shape[:2], dtype=np.uint8)
-            cv2.fillPoly(roi_mask, [pts], 255)
-            bgr[roi_mask == 0] = (255, 255, 255)
+            cv2.fillPoly(roi_mask, [roi_pts], 255)
+            bgr[roi_mask == 0] = (fill_val, fill_val, fill_val)
 
         if analysis_type == "hole":
             results, summary, images = HoleAnalyzer.analyze(bgr, **params)
@@ -69,10 +73,9 @@ def analyze():
         else:
             return jsonify({"error": "Unknown type"}), 400
 
-        # Draw ROI border on result image
-        if roi_polygon and "result" in images:
-            pts = np.array([[int(p["x"]), int(p["y"])] for p in roi_polygon], dtype=np.int32)
-            cv2.polylines(images["result"], [pts], True, (255, 0, 0), 2)  # blue border for ROI
+        # ROI 蓝色边框标注
+        if roi_pts is not None and "result" in images:
+            cv2.polylines(images["result"], [roi_pts], True, (255, 0, 0), 2)
 
         encoded = {}
         for key, img in images.items():
