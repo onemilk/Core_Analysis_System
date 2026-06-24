@@ -51,7 +51,9 @@ async function runAnalysis() {
   if (currentType === 'hole' || currentType === 'fracture') {
     params.threshold = +document.getElementById('threshold').value;
     params.min_area = +document.getElementById('minArea').value;
-    params.min_elongation = (+document.getElementById('minElongation').value) / 10;
+    if (currentType === 'fracture') {
+      params.min_elongation = (+document.getElementById('minElongation').value) / 10;
+    }
     const maxAreaVal = +document.getElementById('maxArea').value;
     params.max_area = maxAreaVal > 0 ? maxAreaVal : 1e9;  // 0=不限制
     params.scale_mm_per_px = +document.getElementById('scale').value;
