@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- 颜色变量 -->
+    <!-- 主色：莫兰迪灰蓝 #7A8B99 -->
+    <linearGradient id="coreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6B7D8C"/>
+      <stop offset="25%" stop-color="#7A8B99"/>
+      <stop offset="50%" stop-color="#8E9FAD"/>
+      <stop offset="75%" stop-color="#7A8B99"/>
+      <stop offset="100%" stop-color="#657784"/>
+    </linearGradient>
+
+    <!-- 顶部高光 -->
+    <linearGradient id="topShine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.45)"/>
+      <stop offset="40%" stop-color="rgba(255,255,255,0.08)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.0)"/>
+    </linearGradient>
+
+    <!-- 孔洞渐变 -->
+    <radialGradient id="holeGrad" cx="35%" cy="35%">
+      <stop offset="0%" stop-color="#8A9BAE"/>
+      <stop offset="60%" stop-color="#A3B5C4"/>
+      <stop offset="100%" stop-color="#7D92A5"/>
+    </radialGradient>
+
+    <!-- 小孔洞渐变 -->
+    <radialGradient id="holeGradSm" cx="40%" cy="30%">
+      <stop offset="0%" stop-color="#94A6B8"/>
+      <stop offset="50%" stop-color="#A3B5C4"/>
+      <stop offset="100%" stop-color="#7D92A5"/>
+    </radialGradient>
+
+    <!-- 毛玻璃背景模糊 -->
+    <filter id="glassBlur">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5"/>
+    </filter>
+
+    <!-- 图标阴影 -->
+    <filter id="iconShadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#4A5A68" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <!-- ============================================================
+       背景：圆角方形毛玻璃画布
+       ============================================================ -->
+  <rect x="32" y="32" width="448" height="448" rx="88" ry="88"
+        fill="rgba(255,255,255,0.2)"
+        stroke="rgba(255,255,255,0.4)" stroke-width="2"
+        filter="url(#iconShadow)"/>
+
+  <!-- 内层微边框 -->
+  <rect x="48" y="48" width="416" height="416" rx="78" ry="78"
+        fill="none"
+        stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+
+  <!-- ============================================================
+       岩心柱体
+       ============================================================ -->
+  <!-- 柱体主体 -->
+  <rect x="168" y="90" width="176" height="332" rx="28" ry="28"
+        fill="url(#coreGrad)"/>
+
+  <!-- 柱体顶部高光 -->
+  <rect x="168" y="90" width="176" height="90" rx="28" ry="28"
+        fill="url(#topShine)"/>
+
+  <!-- 柱体左侧高光边 -->
+  <rect x="174" y="100" width="12" height="312" rx="6" ry="6"
+        fill="rgba(255,255,255,0.15)"/>
+
+  <!-- 柱体右侧阴影边 -->
+  <rect x="328" y="100" width="8" height="312" rx="4" ry="4"
+        fill="rgba(0,0,0,0.08)"/>
+
+  <!-- ============================================================
+       孔洞（3个圆形）
+       ============================================================ -->
+  <!-- 大孔洞 (左上) -->
+  <circle cx="220" cy="180" r="30"
+          fill="url(#holeGrad)"
+          opacity="0.85"/>
+  <ellipse cx="213" cy="170" rx="12" ry="8"
+           fill="rgba(255,255,255,0.2)" transform="rotate(-30 213 170)"/>
+
+  <!-- 中孔洞 (右中) -->
+  <circle cx="290" cy="270" r="22"
+          fill="url(#holeGradSm)"
+          opacity="0.85"/>
+  <ellipse cx="285" cy="263" rx="9" ry="5"
+           fill="rgba(255,255,255,0.18)" transform="rotate(-25 285 263)"/>
+
+  <!-- 小孔洞 (左下) -->
+  <circle cx="245" cy="350" r="16"
+          fill="url(#holeGradSm)"
+          opacity="0.80"/>
+  <ellipse cx="242" cy="346" rx="6" ry="3"
+           fill="rgba(255,255,255,0.15)" transform="rotate(-20 242 346)"/>
+
+  <!-- ============================================================
+       裂缝（豆沙红，锯齿折线）
+       ============================================================ -->
+  <!-- 裂缝1 (左上→中) -->
+  <polyline points="195,140 218,162 205,182 230,210 222,230"
+            fill="none"
+            stroke="#C4A4A4" stroke-width="5"
+            stroke-linecap="round" stroke-linejoin="round"
+            opacity="0.9"/>
+  <!-- 裂缝1 高光 -->
+  <polyline points="196,141 219,163 206,183 231,211 223,231"
+            fill="none"
+            stroke="rgba(255,255,255,0.3)" stroke-width="1.5"
+            stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- 裂缝2 (右下) -->
+  <polyline points="260,340 280,355 275,375 295,395"
+            fill="none"
+            stroke="#C4A4A4" stroke-width="4.5"
+            stroke-linecap="round" stroke-linejoin="round"
+            opacity="0.85"/>
+  <polyline points="261,341 281,356 276,376 296,396"
+            fill="none"
+            stroke="rgba(255,255,255,0.25)" stroke-width="1.2"
+            stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- ============================================================
+       柱体底部横条装饰
+       ============================================================ -->
+  <rect x="185" y="380" width="142" height="6" rx="3" ry="3"
+        fill="#96A48A" opacity="0.65"/>
+
+  <!-- 鼠尾草绿小圆点装饰 (柱体旁) -->
+  <circle cx="152" cy="160" r="5" fill="#96A48A" opacity="0.5"/>
+  <circle cx="155" cy="180" r="3" fill="#96A48A" opacity="0.35"/>
+  <circle cx="150" cy="195" r="4" fill="#96A48A" opacity="0.4"/>
+
+  <circle cx="355" cy="220" r="4" fill="#96A48A" opacity="0.45"/>
+  <circle cx="358" cy="240" r="5" fill="#96A48A" opacity="0.5"/>
+  <circle cx="360" cy="265" r="3" fill="#96A48A" opacity="0.35"/>
+</svg>

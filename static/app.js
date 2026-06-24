@@ -1,3 +1,8 @@
+// ── 自定义标题栏窗口控制 ──
+document.getElementById('btnMin').onclick = () => fetch('/api/window/minimize');
+document.getElementById('btnMax').onclick = () => fetch('/api/window/toggle_max');
+document.getElementById('btnClose').onclick = () => fetch('/api/window/close');
+
 let currentImage = null, currentType = 'hole', resultData = null, imageData = null, chart = null;
 const mainImg = document.getElementById('mainImage');
 const roiCanvas = document.getElementById('roiCanvas');
@@ -14,8 +19,11 @@ document.getElementById('fileInput').onchange = e => {
   reader.readAsDataURL(f);
 };
 
-// Auto-fit ROI canvas when image loads
+// Auto-fit ROI canvas when image loads + 隐藏占位符
 mainImg.onload = () => {
+  mainImg.style.display = 'block';
+  const ph = document.getElementById('placeholder');
+  if (ph) ph.style.display = 'none';
   roiCanvas.width = mainImg.clientWidth || mainImg.naturalWidth || 400;
   roiCanvas.height = mainImg.clientHeight || mainImg.naturalHeight || 300;
 };
@@ -47,6 +55,14 @@ document.querySelectorAll('.view-tabs button').forEach(b => {
 async function runAnalysis() {
   if (!currentImage) { alert('请先打开图像'); return; }
   if (roiMode) { alert('请双击闭合多边形后再分析'); return; }
+
+  // 加载状态
+  const btn = document.getElementById('btnAnalyze');
+  const origText = btn.innerHTML;
+  btn.innerHTML = '⏳ 分析中...';
+  btn.disabled = true;
+
+  try {
   const params = {};
   if (currentType === 'hole' || currentType === 'fracture') {
     params.threshold = +document.getElementById('threshold').value;
@@ -83,6 +99,7 @@ async function runAnalysis() {
       chart = new Chart(ctx, {type:'bar', data:{labels:data.summary.diameters.map((_,i)=>'#'+(i+1)), datasets:[{label:'直径(mm)',data:data.summary.diameters}]}, options:{responsive:true,maintainAspectRatio:false}});
     }
   } catch(e) { alert('分析请求失败: '+e.message); }
+} finally { btn.innerHTML = origText; btn.disabled = false; }
 }
 document.getElementById('btnAnalyze').onclick = runAnalysis;
 

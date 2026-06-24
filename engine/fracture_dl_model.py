@@ -149,8 +149,8 @@ class FractureDLModel:
         h, w = image_bgr.shape[:2]
 
         try:
-            # 小图直接推理，大图分块推理
-            if max(h, w) <= 512:
+            # 小图直接推理，大图分块推理（>768才分块，避免中等图碎片化）
+            if max(h, w) <= 768:
                 mask_256 = cls._predict_single(image_bgr, threshold)
                 if mask_256.shape != (h, w):
                     mask_256 = cv2.resize(mask_256, (w, h), interpolation=cv2.INTER_NEAREST)

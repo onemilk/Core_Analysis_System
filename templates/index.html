@@ -5,43 +5,437 @@
 <title>岩心孔洞裂缝分析系统</title>
 <script src="/static/chart.min.js"></script>
 <style>
+/* ============================================================
+   Morandi 3D Tinted Glass — 立体琉璃质感 (第八步)
+   在第七步玻璃基础上叠加径向渐变+双层阴影+双色边框
+   ============================================================ */
+:root {
+  --radius-sm: 6px;    /* 输入框、标签 */
+  --radius-md: 8px;    /* 大按钮 */
+  --radius-lg: 12px;   /* 图像占位区 */
+  --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --text-dark: #2C2C2C;
+  --text-label: #3D3D3D;
+  --text-muted: #939D8F;
+  --text-glow: 0 1px 1px rgba(255,255,255,0.3);
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: "Microsoft YaHei",sans-serif; display: flex; flex-direction: column; height: 100vh; }
-.toolbar { background: #2c3e50; padding: 10px 20px; display: flex; gap: 12px; align-items: center; }
-.toolbar button { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; background: #3498db; color: #fff; font-size: 14px; }
-.toolbar button.active { background: #e74c3c; }
+
+html { font-size: 16px; }
+body {
+  font-family: "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+  font-weight: 400; line-height: 1.5;
+  display: flex; flex-direction: column; height: 100vh;
+  background: linear-gradient(135deg, #C8CEAE 0%, #D0D6B5 40%, #DBDFC8 100%);
+  color: var(--text-dark);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   CHANGED (v8): 全局3D玻璃规范 — 径向渐变+双层阴影+双色边框
+   ============================================================ */
+.glass {
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  transition: all 0.25s var(--ease);
+}
+
+/* CHANGED (v10): 自定义玻璃标题栏 */
+.titlebar {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 48px; padding: 0 16px;
+  background: rgba(211, 217, 224, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(122, 139, 153, 0.2);
+  -webkit-app-region: drag;
+  user-select: none;
+  z-index: 100;
+}
+.titlebar-left { display: flex; align-items: center; gap: 10px; }
+.titlebar-logo { width: 28px; height: 28px; }
+.titlebar-text {
+  font-size: 18px; font-weight: 600; color: #2C2C2C;
+  letter-spacing: 0.5px;
+}
+.titlebar-controls { display: flex; gap: 0; -webkit-app-region: no-drag; }
+.titlebar-btn {
+  width: 46px; height: 32px; display: inline-flex;
+  align-items: center; justify-content: center;
+  border: none; border-radius: 4px; cursor: pointer;
+  font-size: 14px; font-weight: 400; color: #4A4A4A;
+  background: rgba(200, 195, 190, 0.2);
+  transition: all 0.2s var(--ease);
+}
+.titlebar-btn:hover { background: rgba(200, 195, 190, 0.4); }
+.titlebar-close:hover { background: rgba(196, 164, 164, 0.5); color: #fff; }
+
+/* CHANGED (v8): 工具栏 — 径向渐变替代平涂 */
+.toolbar {
+  background: radial-gradient(circle at 10% 0%, rgba(158,174,139,0.65) 0%, rgba(138,154,123,0.5) 100%);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border-bottom: 1px solid rgba(255,255,255,0.6);
+  border-top: 1px solid rgba(255,255,255,0.8);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06), inset 0 1px 3px rgba(255,255,255,0.5);
+  padding: 0.375rem 1rem;
+  display: flex; gap: 0.5rem; align-items: center;
+  min-height: 2.75rem;
+}
+
+/* CHANGED (v8): 打开图像 — 鼠尾草绿径向渐变+双层阴影+双色边框 */
+#btnOpen {
+  width: 2.25rem; height: 2.25rem; padding: 0;
+  border-radius: var(--radius-md); cursor: pointer;
+  font-size: 1.1rem; color: var(--text-dark);
+  display: inline-flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  text-shadow: var(--text-glow);
+  transition: all 0.25s var(--ease);
+  /* v8: 径向渐变光源左上 */
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.45) 0%, rgba(150,164,138,0.4) 100%);
+  /* v8: 双色边框+双层阴影 */
+  border-top: 1px solid rgba(255,255,255,0.8);
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 4px 12px rgba(150,164,138,0.2), 0 1px 3px rgba(0,0,0,0.06),
+              inset 0 -2px 4px rgba(0,0,0,0.06), inset 0 1px 2px rgba(255,255,255,0.5);
+}
+#btnOpen:hover {
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.6) 0%, rgba(150,164,138,0.55) 100%);
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(150,164,138,0.35), 0 2px 6px rgba(0,0,0,0.1),
+              inset 0 -3px 8px rgba(0,0,0,0.08), inset 0 2px 4px rgba(255,255,255,0.6);
+}
+#btnOpen:active {
+  transform: translateY(0) scale(0.96);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1),
+              inset 0 4px 10px rgba(0,0,0,0.2);
+  transition: all 0.08s var(--ease);
+}
+
+/* CHANGED (v9): 算法分段控制器 — 玻璃选中态，去实心 */
+.seg-control {
+  display: flex; gap: 0;
+  background: rgba(0,0,0,0.05);
+  border-radius: 8px; padding: 3px; margin: 0 0.5rem;
+  border: 1px solid rgba(255,255,255,0.3);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+}
+.seg-control button {
+  padding: 0.375rem 0.875rem; border: none;
+  background: transparent; color: var(--text-dark);
+  cursor: pointer; font-family: inherit; font-size: 0.8125rem; font-weight: 500;
+  border-radius: 6px; text-shadow: var(--text-glow);
+  transition: all 0.25s var(--ease);
+}
+.seg-control button.active {
+  background: rgba(150, 164, 138, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--text-dark); font-weight: 600;
+  box-shadow: 0 0 0 1px rgba(150, 164, 138, 0.3), 0 4px 12px rgba(150, 164, 138, 0.15);
+}
+.seg-control button:hover:not(.active) { background: rgba(255,255,255,0.2); }
+
+.toolbar .spacer { flex: 1; }
+
+/* CHANGED (v8): 工具图标 — 裸色径向渐变+双层阴影 */
+.tool-icon {
+  width: 2rem; height: 2rem; padding: 0;
+  border-radius: var(--radius-md); cursor: pointer;
+  font-size: 1rem; color: var(--text-dark);
+  display: inline-flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  text-shadow: var(--text-glow);
+  transition: all 0.25s var(--ease);
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.35) 0%, rgba(200,195,190,0.25) 100%);
+  border-top: 1px solid rgba(255,255,255,0.7);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.04), inset 0 -1px 3px rgba(0,0,0,0.04), inset 0 1px 2px rgba(255,255,255,0.4);
+}
+.tool-icon:hover {
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.5) 0%, rgba(122,139,153,0.3) 100%);
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(122,139,153,0.3), 0 2px 6px rgba(0,0,0,0.08),
+              inset 0 -3px 8px rgba(0,0,0,0.06), inset 0 2px 4px rgba(255,255,255,0.5);
+}
+.tool-icon:active {
+  transform: translateY(0) scale(0.96);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 4px 10px rgba(0,0,0,0.18);
+  transition: all 0.08s var(--ease);
+}
+
+#btnClearROI {
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.4) 0%, rgba(196,164,164,0.45) 100%);
+}
+
+/* ============================================================
+   CHANGED (v8): 主布局
+   ============================================================ */
 .main { display: flex; flex: 1; overflow: hidden; }
-.viewer { flex: 1; padding: 12px; display: flex; flex-direction: column; align-items: center; overflow: auto; background: #1a1a1a; }
-.viewer img { max-width: 100%; max-height: 70vh; object-fit: contain; }
-.view-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
-.view-tabs button { padding: 4px 12px; border: 1px solid #555; background: #333; color: #aaa; cursor: pointer; border-radius: 4px 4px 0 0; font-size: 12px; }
-.view-tabs button.current { background: #444; color: #fff; border-bottom: 2px solid #3498db; }
-.panel { width: 300px; padding: 16px; overflow-y: auto; background: #f8f9fa; border-left: 1px solid #ddd; }
-.panel label { display: block; margin: 8px 0 4px; font-size: 13px; color: #555; }
-.panel input, .panel select { width: 100%; padding: 6px; font-size: 13px; margin-bottom: 8px; }
-.panel button { width: 100%; padding: 10px; background: #2c3e50; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; margin: 8px 0; }
-.summary { background: #fff; padding: 12px; border-radius: 6px; margin: 8px 0; font-size: 12px; }
-.summary td { padding: 2px 8px; }
-.chart-area { padding: 12px; background: #fff; border-top: 1px solid #ddd; max-height: 200px; }
-.img-container { position: relative; display: inline-block; }
-.img-container canvas { position: absolute; top: 0; left: 0; cursor: crosshair; }
+
+/* CHANGED (v8): 左侧图像区 — 径向渐变 */
+.viewer {
+  width: 65%; flex-shrink: 0;
+  display: flex; flex-direction: column;
+  background: radial-gradient(ellipse at 40% 30%, rgba(255,255,255,0.2) 0%, rgba(200,206,174,0.35) 100%);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  position: relative;
+}
+
+.view-tabs { display: flex; gap: 0; padding: 0.5rem 0.75rem 0 0.75rem; }
+.view-tabs button {
+  padding: 0.375rem 1rem; border: none;
+  background: transparent; color: var(--text-muted);
+  cursor: pointer; font-family: inherit; font-size: 0.8125rem; font-weight: 500;
+  position: relative; transition: all 0.25s var(--ease);
+}
+.view-tabs button.current { color: var(--text-dark); font-weight: 600; }
+.view-tabs button.current::after {
+  content: ''; position: absolute; bottom: 0; left: 10%; width: 80%; height: 2px;
+  background: rgba(122,139,153,0.4); border-radius: 1px;
+}
+.view-tabs button:hover { background: rgba(200,195,190,0.15); }
+
+.img-container {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 0.75rem; position: relative;
+}
+.img-container img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: var(--radius-lg); }
+.img-container canvas { position: absolute; top: 0; left: 0; }
+.img-container img[src=""] { display: none; }
+
+/* CHANGED (v8): 占位框 — 玻璃蚀刻凹陷 */
+.placeholder-hint {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 0.75rem;
+  color: var(--text-muted); font-size: 1.1rem;
+  border: 2px dashed rgba(122,139,153,0.2);
+  border-radius: var(--radius-lg);
+  width: 90%; height: 80%;
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.15) 0%, rgba(122,139,153,0.04) 100%);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.04);
+}
+.placeholder-hint .icon { font-size: 3rem; opacity: 0.5; }
+
+/* ============================================================
+   CHANGED (v8): 右侧面板 — 径向渐变玻璃
+   ============================================================ */
+.panel {
+  width: 35%; flex-shrink: 0; overflow-y: auto;
+  background: radial-gradient(ellipse at 20% 10%, rgba(255,255,255,0.3) 0%, rgba(217,222,198,0.5) 100%);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  border-left: 1px solid rgba(255,255,255,0.5);
+  padding: 1rem 1.25rem;
+}
+.panel-section { margin-bottom: 1rem; }
+/* CHANGED (v9): 分区标题 — 15px Bold + 左侧灰蓝竖条 */
+.section-title {
+  font-size: 0.9375rem; font-weight: 700; color: #2C2C2C;
+  margin: 0 0 0.75rem 0; padding-left: 0.625rem;
+  position: relative;
+}
+.section-title::before {
+  content: '';
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 4px; height: 20px;
+  background: rgba(122, 139, 153, 0.5);
+  border-radius: 2px;
+}
+.panel label {
+  display: block; margin: 0.5rem 0 0.25rem;
+  font-size: 0.8125rem; font-weight: 500; color: var(--text-label);
+}
+/* CHANGED (v9): 滑块间垂直间距统一 */
+.panel .slider-row { margin-bottom: 0.25rem; }
+
+.slider-row { display: flex; align-items: center; gap: 0.5rem; }
+.slider-row input[type="range"] { flex: 1; margin: 0; accent-color: #7A8B99; }
+.slider-row .slider-val {
+  min-width: 2.25rem; text-align: right;
+  font-size: 0.8125rem; font-weight: 600; color: var(--text-dark);
+}
+
+/* CHANGED (v8): 数字输入 — 蚀刻凹陷槽 */
+.panel input[type="number"] {
+  width: 100%; padding: 0.4375rem 0.5rem;
+  font-family: inherit; font-size: 0.8125rem;
+  border-radius: var(--radius-sm); color: var(--text-dark);
+  background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.25) 0%, rgba(122,139,153,0.08) 100%);
+  border-top: 1px solid rgba(255,255,255,0.25);
+  border-bottom: 1px solid rgba(255,255,255,0.5);
+  border-left: 1px solid rgba(255,255,255,0.3);
+  border-right: 1px solid rgba(255,255,255,0.3);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.06), inset 0 1px 2px rgba(255,255,255,0.3);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  transition: all 0.25s var(--ease);
+}
+.panel input[type="number"]:focus {
+  border-top-color: rgba(122,139,153,0.6);
+  border-bottom-color: rgba(255,255,255,0.8);
+  background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.35) 0%, rgba(122,139,153,0.15) 100%);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 3px rgba(255,255,255,0.5),
+              0 0 0 3px rgba(122,139,153,0.08);
+  outline: none;
+}
+
+.param-divider { border: none; border-top: 1px dashed rgba(255,255,255,0.3); margin: 0.75rem 0; }
+
+/* ============================================================
+   CHANGED (v8): 按钮系统 — 3D径向渐变+双层阴影+双色边框
+   ============================================================ */
+.btn-base {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 0.375rem; border-radius: var(--radius-md);
+  cursor: pointer; font-family: inherit;
+  color: var(--text-dark); text-shadow: var(--text-glow);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  transition: all 0.25s var(--ease);
+  /* v8: 双色边框 */
+  border-top: 1px solid rgba(255,255,255,0.7);
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  border-left: 1px solid rgba(255,255,255,0.4);
+  border-right: 1px solid rgba(255,255,255,0.4);
+}
+.btn-base:hover {
+  transform: translateY(-5px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(122,139,153,0.35), 0 3px 8px rgba(0,0,0,0.1),
+              inset 0 -3px 8px rgba(0,0,0,0.06), inset 0 2px 4px rgba(255,255,255,0.5);
+}
+.btn-base:active {
+  transform: translateY(0) scale(0.96);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1),
+              inset 0 4px 10px rgba(0,0,0,0.25);
+  transition: all 0.08s var(--ease);
+}
+.btn-base:disabled {
+  filter: saturate(0.3); opacity: 0.5; cursor: not-allowed;
+  box-shadow: none; transform: none;
+}
+
+/* CHANGED (v9): 主按钮 — 减轻重量，保持玻璃透感 */
+#btnAnalyze {
+  width: 100%; height: 2.75rem; padding: 0;
+  font-size: 0.9375rem; font-weight: 600;
+  margin: 0.75rem 0 0.5rem; border-radius: 8px;
+  background: rgba(122, 139, 153, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 12px rgba(122,139,153,0.15), 0 1px 3px rgba(0,0,0,0.06),
+              inset 0 -3px 8px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.5);
+}
+#btnAnalyze:hover {
+  background: rgba(122, 139, 153, 0.55);
+  box-shadow: 0 8px 20px rgba(122,139,153,0.25), 0 2px 6px rgba(0,0,0,0.08),
+              inset 0 -3px 8px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.55);
+  transform: translateY(-5px) scale(1.03);
+}
+#btnAnalyze:active {
+  transform: translateY(0) scale(0.96);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1), inset 0 4px 10px rgba(0,0,0,0.25);
+  transition: all 0.08s var(--ease);
+}
+
+/* CHANGED (v8): 导出按钮 — 裸色径向渐变 */
+.export-row { display: flex; gap: 0.5rem; }
+.export-row .btn-base {
+  flex: 1; height: 2.25rem;
+  font-size: 0.8125rem; font-weight: 400;
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.3) 0%, rgba(200,195,190,0.2) 100%);
+  border-top: 1px solid rgba(255,255,255,0.65);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.04), inset 0 -2px 4px rgba(0,0,0,0.04), inset 0 1px 2px rgba(255,255,255,0.35);
+}
+.export-row .btn-base:hover {
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.45) 0%, rgba(200,195,190,0.4) 100%);
+  box-shadow: 0 12px 30px rgba(200,195,190,0.3), 0 2px 6px rgba(0,0,0,0.08),
+              inset 0 -3px 8px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.45);
+}
+
+/* CHANGED (v9): 摘要 — 图像区右下角浮窗 */
+.summary {
+  position: absolute; bottom: 1rem; right: 1rem; z-index: 5;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem; font-size: 0.75rem;
+  color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  max-width: 70%;
+}
+.summary td { padding: 0.125rem 0.5rem; }
+.summary i { color: rgba(255,255,255,0.7); }
+
+/* CHANGED (v8): 图表区 */
+.chart-area {
+  padding: 0.625rem 1rem;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.2) 0%, rgba(219,223,200,0.55) 100%);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  border-top: 1px solid rgba(255,255,255,0.6);
+  max-height: 200px;
+}
+
+.spinner {
+  width: 2.5rem; height: 2.5rem;
+  border: 3px solid rgba(122,139,153,0.15);
+  border-top-color: rgba(122,139,153,0.7);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.hidden-file { display: none; }
 </style>
 </head>
 <body>
-<div class="toolbar">
-  <button id="btnOpen">📁 打开图像</button>
-  <input type="file" id="fileInput" accept="image/*" style="display:none">
-  <button id="btnHole" class="active">🕳️ 孔洞分析</button>
-  <button id="btnFracture">⚡ 裂缝分析</button>
-  <button id="btnGrain">📏 粒度分析</button>
-  <span style="flex:1"></span>
-  <button id="btnROI">📐 框选区域</button>
-  <button id="btnClearROI" style="display:none;background:#e67e22">清除框选</button>
-  <button id="btnKnowledge">📚 知识库</button>
-  <button id="btnReport">📊 报告</button>
+
+<!-- 自定义玻璃标题栏 -->
+<div class="titlebar" id="titlebar">
+  <div class="titlebar-left">
+    <img src="/static/icon.svg" alt="" class="titlebar-logo">
+    <span class="titlebar-text">岩心孔洞裂缝分析系统</span>
+  </div>
+  <div class="titlebar-controls">
+    <button class="titlebar-btn" id="btnMin" title="最小化">─</button>
+    <button class="titlebar-btn" id="btnMax" title="最大化">□</button>
+    <button class="titlebar-btn titlebar-close" id="btnClose" title="关闭">✕</button>
+  </div>
 </div>
+
+<!-- 工具栏 -->
+<div class="toolbar glass">
+  <img src="/static/icon.svg" alt="Logo" style="height:1.75rem;width:1.75rem;margin-right:0.25rem;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.1))">
+  <button id="btnOpen" class="glass" title="打开图像">📁</button>
+  <input type="file" id="fileInput" accept="image/*" class="hidden-file">
+
+  <div class="seg-control glass">
+    <button id="btnHole" class="active">🕳️ 孔洞</button>
+    <button id="btnFracture">⚡ 裂缝</button>
+    <button id="btnGrain">📏 粒度</button>
+  </div>
+
+  <span class="spacer"></span>
+
+  <button id="btnROI" class="tool-icon" title="框选区域">📐</button>
+  <button id="btnClearROI" class="tool-icon" style="display:none" title="清除框选">✕</button>
+  <button id="btnKnowledge" class="tool-icon" title="知识库">📚</button>
+  <button id="btnReport" class="tool-icon" title="生成报告">📊</button>
+</div>
+
+<!-- 主内容区 -->
 <div class="main">
-  <div class="viewer">
+  <!-- 左侧: 图像 -->
+  <div class="viewer glass">
     <div class="view-tabs">
       <button class="current" data-view="result">结果图</button>
       <button data-view="original">原图</button>
@@ -49,33 +443,77 @@ body { font-family: "Microsoft YaHei",sans-serif; display: flex; flex-direction:
       <button data-view="binary">二值图</button>
     </div>
     <div class="img-container">
-      <img id="mainImage" src="" alt="请打开图像">
+      <div class="placeholder-hint" id="placeholder">
+        <span class="icon">📂</span>
+        <span>请打开图像</span>
+      </div>
+      <img id="mainImage" src="" alt="分析结果" style="display:none">
       <canvas id="roiCanvas"></canvas>
+      <div class="summary" id="summary"><i>等待分析...</i></div>
     </div>
   </div>
-  <div class="panel">
+
+  <!-- 右侧: 参数面板 -->
+  <div class="panel glass">
+    <div class="section-title">分析参数</div>
+
+    <!-- 孔洞/裂缝 参数 -->
     <div id="holeParams">
-      <label>阈值</label><input type="range" id="threshold" min="50" max="200" value="80">
-      <span id="thresholdVal">80</span>
-      <label>最小面积(px)</label><input type="number" id="minArea" value="80">
-      <label>狭长度</label><input type="range" id="minElongation" min="10" max="30" value="25">
-      <span id="elongVal">2.5</span>
-      <label>最大面积(px, 0=不限)</label><input type="number" id="maxArea" value="0">
-      <label>标尺(mm/px)</label><input type="number" id="scale" value="0.05" step="0.01">
+      <div class="panel-section">
+        <div class="section-title">几何约束</div>
+        <label>阈值</label>
+        <div class="slider-row">
+          <input type="range" id="threshold" min="50" max="200" value="80">
+          <span class="slider-val" id="thresholdVal">80</span>
+        </div>
+        <label>最小面积 (px)</label>
+        <input type="number" id="minArea" value="80">
+        <label>狭长度</label>
+        <div class="slider-row">
+          <input type="range" id="minElongation" min="10" max="30" value="25">
+          <span class="slider-val" id="elongVal">2.5</span>
+        </div>
+        <label>最大面积 (px, 0=不限)</label>
+        <input type="number" id="maxArea" value="0">
+
+        <hr class="param-divider">
+        <div class="section-title">标尺校准</div>
+        <label>标尺 (mm/px)</label>
+        <input type="number" id="scale" value="0.05" step="0.01">
+      </div>
     </div>
+
+    <!-- 粒度 参数 -->
     <div id="grainParams" style="display:none">
-      <label>最小颗粒面积(px)</label><input type="number" id="grainMinArea" value="50">
-      <label>分水岭灵敏度(11-51)</label><input type="range" id="blockSize" min="11" max="51" step="2" value="21">
-      <span id="blockSizeVal">31</span>
-      <label>标尺(mm/px)</label><input type="number" id="grainScale" value="0.05" step="0.01">
+      <div class="panel-section">
+        <div class="section-title">几何约束</div>
+        <label>闭运算强度</label>
+        <div class="slider-row">
+          <input type="range" id="blockSize" min="7" max="51" step="2" value="21">
+          <span class="slider-val" id="blockSizeVal">21</span>
+        </div>
+        <label>最小颗粒面积 (px)</label>
+        <input type="number" id="grainMinArea" value="50">
+
+        <hr class="param-divider">
+        <div class="section-title">标尺校准</div>
+        <label>标尺 (mm/px)</label>
+        <input type="number" id="grainScale" value="0.05" step="0.01">
+      </div>
     </div>
-    <button id="btnAnalyze">🔍 开始分析</button>
-    <div class="summary" id="summary"><i>等待分析...</i></div>
-    <button id="btnExportJSON">📥 导出JSON</button>
-    <button id="btnExportCSV">📊 导出CSV</button>
+
+    <!-- 操作按钮 -->
+    <button id="btnAnalyze" class="btn-base btn-filled primary">▶ 开始分析</button>
+    <div class="export-row">
+      <button id="btnExportJSON" class="btn-base btn-outline">📥 JSON</button>
+      <button id="btnExportCSV" class="btn-base btn-outline">📊 CSV</button>
+    </div>
   </div>
 </div>
-<div class="chart-area"><canvas id="chart"></canvas></div>
+
+<!-- 图表区 -->
+<div class="chart-area glass"><canvas id="chart"></canvas></div>
+
 <script src="/static/app.js"></script>
 </body>
 </html>

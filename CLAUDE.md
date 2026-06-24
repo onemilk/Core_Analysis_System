@@ -23,7 +23,7 @@ D:/python/python312/python.exe -m pytest tests/ -q
 D:/python/python312/python.exe launch.py
 
 # 打包成 exe（结束时必执行）
-D:/python/python312/python.exe -m PyInstaller --name="CoreAnalysisSystem" --onefile --windowed --add-data="templates;templates" --add-data="static;static" --add-data="knowledge.json;." --add-data="best_model.pth;." --add-data="ohters;ohters" --hidden-import=scipy.ndimage --hidden-import=skimage.feature --hidden-import=skimage.segmentation --hidden-import=webview --hidden-import=crackawarenet --hidden-import=unet_model --hidden-import=engine.fracture_dl_model launch.py
+D:/python/python312/python.exe -m PyInstaller --name="CoreAnalysisSystem" --onefile --windowed --icon=icon.ico --add-data="templates;templates" --add-data="static;static" --add-data="knowledge.json;." --add-data="best_model.pth;." --add-data="ohters;ohters" --hidden-import=scipy.ndimage --hidden-import=skimage.feature --hidden-import=skimage.segmentation --hidden-import=webview --hidden-import=crackawarenet --hidden-import=unet_model --hidden-import=engine.fracture_dl_model launch.py
 
 # 结束工作流程
 1. D:/python/python312/python.exe -m pytest tests/ -q
