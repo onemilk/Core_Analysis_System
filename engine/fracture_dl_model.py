@@ -120,16 +120,28 @@ class FractureDLModel:
     # ============================================================
 
     @classmethod
+    def _predict_single(cls, image_bgr: np.ndarray, threshold: float) -> np.ndarray:
+        """单次推理：BGR → 256×256 → 模型 → 概率图 → 二值掩码（256×256）"""
+        from PIL import Image
+        img_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+        img_pil = Image.fromarray(img_rgb)
+        img_tensor = cls._transform(img_pil).unsqueeze(0).to(cls._device)
+        with torch.no_grad():
+            output = cls._model(img_tensor)
+            prob = torch.sigmoid(output).squeeze().cpu().numpy()
+        return (prob > threshold).astype(np.uint8) * 255
+
+    @classmethod
     def predict(cls, image_bgr: np.ndarray, threshold: float = 0.3) -> np.ndarray:
         """对 BGR 图像进行深度学习裂缝检测，返回二值掩码。
 
+        大图自动分块推理（短边>512时），避免缩放到256×256丢失细缝。
+
         参数:
             image_bgr:  BGR 格式图像 (H, W, 3)，uint8
-            threshold:  二值化阈值 (0~1)，默认 0.3（偏敏感，配合 CV 管线使用，
-                        宁可多检不漏检，后续形态学+形状过滤会清理误检）
+            threshold:  二值化阈值 (0~1)，默认 0.3
         返回:
-            binary_mask: (H, W) uint8 二值掩码，255=裂缝，0=背景。
-                         模型不可用时返回全零掩码。
+            binary_mask: (H, W) uint8 二值掩码，255=裂缝，0=背景
         """
         if not cls._ensure_model():
             return np.zeros(image_bgr.shape[:2], dtype=np.uint8)
@@ -137,25 +149,49 @@ class FractureDLModel:
         h, w = image_bgr.shape[:2]
 
         try:
-            # BGR → RGB → PIL → 预处理 → 推理
-            img_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+            # 小图直接推理，大图分块推理
+            if max(h, w) <= 512:
+                mask_256 = cls._predict_single(image_bgr, threshold)
+                if mask_256.shape != (h, w):
+                    mask_256 = cv2.resize(mask_256, (w, h), interpolation=cv2.INTER_NEAREST)
+                return mask_256
 
-            # 使用 PIL 直接从 numpy 创建（避免 opencv→PIL 格式问题）
-            from PIL import Image
-            img_pil = Image.fromarray(img_rgb)
-            img_tensor = cls._transform(img_pil).unsqueeze(0).to(cls._device)
+            # === 分块推理（大图） ===
+            # 分块策略：将大图均匀切成 3×2 或 2×3 块（最多 6 块），每块独立 DL 推理
+            # 大块 = 更多原始细节进入模型 = 细缝不丢失
+            n_cols = 3 if w >= h else 2
+            n_rows = 2 if w >= h else 3
+            tile_w = w // n_cols
+            tile_h = h // n_rows
+            overlap = min(tile_w, tile_h) // 4
 
-            # 前向推理
-            with torch.no_grad():
-                output = cls._model(img_tensor)
-                prob = torch.sigmoid(output).squeeze().cpu().numpy()
+            stride_y = tile_h - overlap
+            stride_x = tile_w - overlap
 
-            # 二值化 + 中值滤波去噪（与 predict.py 后处理一致）
-            binary = (prob > threshold).astype(np.uint8) * 255
+            full_prob = np.zeros((h, w), dtype=np.float32)
+            weight = np.zeros((h, w), dtype=np.float32)
 
-            # 缩放回原始图像尺寸（最近邻插值，保持锐利边界）
-            if binary.shape != (h, w):
-                binary = cv2.resize(binary, (w, h), interpolation=cv2.INTER_NEAREST)
+            for row in range(n_rows):
+                for col in range(n_cols):
+                    y1 = row * stride_y
+                    x1 = col * stride_x
+                    y2, x2 = y1 + tile_h, x1 + tile_w
+
+                    # 边界对齐
+                    if row == n_rows - 1: y1, y2 = h - tile_h, h
+                    if col == n_cols - 1: x1, x2 = w - tile_w, w
+                    y1, x1 = max(0, y1), max(0, x1)
+
+                    tile = image_bgr[y1:y2, x1:x2]
+                    mask_tile = cls._predict_single(tile, threshold).astype(np.float32) / 255.0
+                    mask_tile = cv2.resize(mask_tile, (x2 - x1, y2 - y1), interpolation=cv2.INTER_LINEAR)
+
+                    full_prob[y1:y2, x1:x2] += mask_tile
+                    weight[y1:y2, x1:x2] += 1.0
+
+            # 归一化 + 二值化
+            full_prob = full_prob / (weight + 1e-8)
+            binary = (full_prob > 0.5).astype(np.uint8) * 255
 
             return binary
 
